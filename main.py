@@ -53,14 +53,13 @@ def reqister():
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Такой пользователь уже есть")
-        if db_sess.query(User).filter(User.name == form.name.data).first():
-            return render_template('register.html', title='Регистрация',
-                                   form=form, message="Такой пользователь уже есть")
         if " " in form.name.data:
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Нельзя использовать пробел в имени")
         user = User(
+            surname=form.surname.data,
             name=form.name.data,
+            patronymic=form.patronymic.data,
             email=form.email.data,
             about=form.about.data
         )
@@ -98,6 +97,14 @@ def logout():
 
 # переход в профиль
 @app.route("/profile/<int:id>", methods=['GET', 'POST'])
+def profile(id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(id=id).first()
+    return render_template("user_profile.html", user=user)
+
+
+# изменение информации в профиле
+@app.route("/profile/<int:id>/edit", methods=['GET', 'POST'])
 def profile(id):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(id=id).first()
