@@ -105,7 +105,7 @@ def profile(id):
 
 # изменение информации в профиле
 @app.route("/profile/<int:id>/edit", methods=['GET', 'POST'])
-def profile(id):
+def profile_edit(id):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(id=id).first()
     return render_template("user_profile.html", user=user)
