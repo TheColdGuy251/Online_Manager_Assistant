@@ -57,6 +57,7 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Нельзя использовать пробел в имени")
         user = User(
+            username=form.username.data,
             surname=form.surname.data,
             name=form.name.data,
             patronymic=form.patronymic.data,
