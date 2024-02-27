@@ -35,7 +35,6 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-# главная страница (здесь отображаются новости)
 @app.route("/")
 def index():
     db_sess = db_session.create_session()
@@ -103,6 +102,18 @@ def profile(id):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(id=id).first()
     return render_template("user_profile.html", user=user)
+
+
+@app.route('/test', methods=['GET'])
+def test():
+    response = jsonify({'success': 'OK'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Authorization, Origin, X-Requested-With, Accept, X-PINGOTHER, Content-Type')
+
+    return response
 
 
 if __name__ == '__main__':
