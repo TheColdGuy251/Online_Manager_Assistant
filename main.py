@@ -6,10 +6,11 @@ from forms.register_form import RegisterForm
 from forms.login_form import LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import text
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tyuiu_secret_key'
-
+CORS(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -44,37 +45,32 @@ def index():
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
-    form = RegisterForm()
     db_sess = db_session.create_session()
-    if form.validate_on_submit():
-        form.username.data = str(form.username.data).lower().strip()
-        if form.password.data != form.password_again.data:
-            return render_template('register.html', title='Регистрация',
-                                   form=form, message="Пароли не совпадают")
-
-        if db_sess.query(User).filter(User.username == form.username.data).first():
-            return render_template('register.html', title='Регистрация',
-                                   form=form, message="Такое имя пользователя уже есть")
-        if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', title='Регистрация',
-                                   form=form, message="Такой адрес электронной почты уже есть")
-        if " " in form.username.data:
-            return render_template('register.html', title='Регистрация',
-                                   form=form, message="Нельзя использовать пробел в имени")
-        user = User(
-            username=form.username.data,
-            surname=form.surname.data,
-            name=form.name.data,
-            patronymic=form.patronymic.data,
-            email=form.email.data,
-            about=form.about.data
-        )
-        user.set_password(form.password.data)
-        db_sess.add(user)
-        db_sess.commit()
-        return redirect('/login')
-
-    return render_template('register.html', title='Регистрация', form=form)
+    data = request.json.get('data')
+    username = data.get('username')
+    surname = data.get('surname')
+    name = data.form.get('name')
+    patronymic = data.get('patronymic')
+    about = data.get('about')
+    email = data.get('email')
+    password = data.get('password')
+    username = str(username).lower().strip()
+    if db_sess.query(User).filter(User.username == username).first():
+        return {'success': 'user_exists'}
+    if db_sess.query(User).filter(User.email == email).first():
+        return {'success': 'email_exists'}
+    user = User(
+        username=username,
+        surname=surname,
+        name=name,
+        patronymic=patronymic,
+        email=email,
+        about=about
+    )
+    user.set_password(password)
+    db_sess.add(user)
+    db_sess.commit()
+    return jsonify({'success': "OK"})
 
 
 # вход в аккаунт
@@ -106,7 +102,7 @@ def logout():
 def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(username=username).first()
-    return "user"
+    return str(user)
 
 
 # изменение информации в профиле
@@ -117,7 +113,7 @@ def profile_edit(username):
     return render_template("user_profile.html", user=user)
 
 
-@app.route('/test', methods=['GET'])
+@app.route('/test/Ilya', methods=['GET'])
 def test():
     response = jsonify({'success': 'OK'})
     response.headers.add('Access-Control-Allow-Origin', '*')
