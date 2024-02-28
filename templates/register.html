@@ -34,7 +34,7 @@
     </p>
         <p>
         {{ form.patronymic.label }}<br>
-        {{ form.name(class="form-control") }}<br>
+        {{ form.patronymic(class="form-control") }}<br>
         {% for error in form.patronymic.errors %}
             <p class="alert alert-danger" role="alert">
                 {{ error }}

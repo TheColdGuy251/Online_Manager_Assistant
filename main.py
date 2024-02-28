@@ -45,15 +45,20 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
     form = RegisterForm()
+    db_sess = db_session.create_session()
     if form.validate_on_submit():
+        form.username.data = str(form.username.data).lower().strip()
         if form.password.data != form.password_again.data:
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Пароли не совпадают")
-        db_sess = db_session.create_session()
+
+        if db_sess.query(User).filter(User.username == form.username.data).first():
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Такое имя пользователя уже есть")
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
-                                   form=form, message="Такой пользователь уже есть")
-        if " " in form.name.data:
+                                   form=form, message="Такой адрес электронной почты уже есть")
+        if " " in form.username.data:
             return render_template('register.html', title='Регистрация',
                                    form=form, message="Нельзя использовать пробел в имени")
         user = User(
@@ -97,18 +102,18 @@ def logout():
 
 
 # переход в профиль
-@app.route("/profile/<int:id>", methods=['GET', 'POST'])
-def profile(id):
+@app.route("/profile/<string:username>", methods=['GET', 'POST'])
+def profile(username):
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(id=id).first()
-    return render_template("user_profile.html", user=user)
+    user = db_sess.query(User).filter_by(username=username).first()
+    return "user"
 
 
 # изменение информации в профиле
-@app.route("/profile/<int:id>/edit", methods=['GET', 'POST'])
-def profile_edit(id):
+@app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
+def profile_edit(username):
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(id=id).first()
+    user = db_sess.query(User).filter_by(username=username).first()
     return render_template("user_profile.html", user=user)
 
 
