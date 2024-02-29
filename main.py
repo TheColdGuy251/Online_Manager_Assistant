@@ -125,6 +125,20 @@ def profile_info(username):
     return jsonify({'Id': user.id, 'Username': user.username, 'Surname': user.surname, 'Name': user.name, 'Patrinymic': user.patronymic, 'Email': user.email})
 
 
+# удаление профиля
+@app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
+@login_required
+def news_delete(username):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(username=username).first()
+    if user:
+        db_sess.delete(user)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/')
+
+
 @app.route('/test/Vlada', methods=['GET'])
 def test():
     response = jsonify({'luck': 'ok'})
