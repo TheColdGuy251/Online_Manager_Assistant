@@ -117,9 +117,17 @@ def profile_edit(username):
     return render_template("user_profile.html", user=user)
 
 
-@app.route('/test', methods=['GET'])
+# информация о пользователе
+@app.route("/profile/<string:username>/info", methods=['GET', 'POST'])
+def profile_info(username):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(username=username).first()
+    return jsonify({'Id': user.id, 'Username': user.username, 'Surname': user.surname, 'Name': user.name, 'Patrinymic': user.patronymic, 'Email': user.email})
+
+
+@app.route('/test/Vlada', methods=['GET'])
 def test():
-    response = jsonify({'success': 'OK'})
+    response = jsonify({'luck': 'ok'})
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
