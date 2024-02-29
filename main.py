@@ -1,11 +1,12 @@
 from flask import Flask, render_template, redirect, request, make_response, session, abort, jsonify, url_for, \
-    send_from_directory
+    send_from_directory, Response
 from data import db_session
 from data.users import User
 from forms.register_form import RegisterForm
 from forms.login_form import LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import text
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tyuiu_secret_key'
@@ -106,8 +107,16 @@ def logout():
 def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(username=username).first()
-    return "user"
-
+    '''
+    user = str(users)[7:].replace(" ", " | ")
+    str1 = "Id, Username, Surname, Name, Patronymic, Email"
+    keys = str1.split(", ")
+    values = user. split(" | ")
+    dictionary = dict(zip(keys, values))
+    return dictionary
+    '''
+    return jsonify({'Id': user.id, 'Username': user.username, 'Surname': user.surname, 'Name': user.name, 'Patrinymic': user.patronymic, 'Email': user.email})
+    #<User> 1 roman Улеев Роман Игоревич romanuleev178@gmail.com
 
 # изменение информации в профиле
 @app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
@@ -116,10 +125,15 @@ def profile_edit(username):
     user = db_sess.query(User).filter_by(username=username).first()
     return render_template("user_profile.html", user=user)
 
+@app.route("/about", methods=['GET', 'POST'])
+def about():
+    return render_template()
 
-@app.route('/test', methods=['GET'])
+@app.route('/test/Roman', methods=['GET'])
 def test():
-    response = jsonify({'success': 'OK'})
+    users = [{'id': 1, 'username': 'Roman'},
+             {'id': 2, 'username': 'Ilya'}]
+    response = jsonify(users)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -127,7 +141,6 @@ def test():
                          'Authorization, Origin, X-Requested-With, Accept, X-PINGOTHER, Content-Type')
 
     return response
-
 
 if __name__ == '__main__':
     main()
