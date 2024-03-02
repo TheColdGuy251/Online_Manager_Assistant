@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, make_response, sess
     send_from_directory
 from data import db_session
 from data.users import User
+from data.tasks import Task
 from forms.register_form import RegisterForm
 from forms.login_form import LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -36,10 +37,10 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
-    return render_template("index.html")
+    return jsonify({'success': "OK"})
 
 
 # регистрация аккаунта
@@ -103,11 +104,15 @@ def logout():
 
 
 # переход в профиль
-@app.route("/profile/<string:username>", methods=['GET', 'POST'])
+@app.route("/profile/<string:username>", methods=['GET'])
 def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(username=username).first()
-    return str(user)
+
+    if user:
+        user_dict = {'username': user.username, 'surname': user.surname.decode('utf-8'), 'name': user.name.encode('utf-8'), 'patronymic': user.patronymic.decode('utf-8'), 'about': user.about.decode('utf-8'), 'created_date': user.created_date}
+        return jsonify({'data': user_dict})
+    return jsonify({'data': 'User not found'})
 
 
 # изменение информации в профиле
