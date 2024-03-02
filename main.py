@@ -44,7 +44,8 @@ def index():
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
-    if request.method == "POST":
+    form = RegisterForm()
+    if request.method == "POST" and not form.validate_on_submit():
         db_sess = db_session.create_session()
         data = request.json.get('data')
         username = data.get('username')
@@ -71,7 +72,6 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         return jsonify({'success': "OK"})
-    form = RegisterForm()
     db_sess = db_session.create_session()
     if form.validate_on_submit():
         form.username.data = str(form.username.data).lower().strip()
