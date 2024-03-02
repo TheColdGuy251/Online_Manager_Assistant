@@ -1,19 +1,20 @@
 from flask import Flask, render_template, redirect, request, make_response, session, abort, jsonify, url_for, \
-    send_from_directory, Response
+    send_from_directory
 from data import db_session
 from data.users import User
+from data.tasks import Task
 from forms.register_form import RegisterForm
 from forms.login_form import LoginForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import text
+from flask_cors import CORS
 import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tyuiu_secret_key'
-
+CORS(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-
 
 def main():
     db_session.global_init("db/users.db")
@@ -45,6 +46,35 @@ def index():
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
+    '''
+    db_sess = db_session.create_session()
+    data = request.json.get('data')
+    username = data.get('username')
+    surname = data.get('surname')
+    name = data.form.get('name')
+    patronymic = data.get('patronymic')
+    about = data.get('about')
+    email = data.get('email')
+    password = data.get('password')
+    username = str(username).lower().strip()
+    if db_sess.query(User).filter(User.username == username).first():
+        return {'success': 'user_exists'}
+    if db_sess.query(User).filter(User.email == email).first():
+        return {'success': 'email_exists'}
+    user = User(
+        username=username,
+        surname=surname,
+        name=name,
+        patronymic=patronymic,
+        email=email,
+        about=about
+    )
+    user.set_password(password)
+    db_sess.add(user)
+    db_sess.commit()
+    return jsonify({'success': "OK"})
+    '''
+
     form = RegisterForm()
     db_sess = db_session.create_session()
     if form.validate_on_submit():
@@ -77,7 +107,6 @@ def reqister():
 
     return render_template('register.html', title='Регистрация', form=form)
 
-
 # вход в аккаунт
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -101,87 +130,11 @@ def logout():
     logout_user()
     return redirect("/")
 
-
 # переход в профиль
 @app.route("/profile/<string:username>", methods=['GET', 'POST'])
 def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(username=username).first()
-
-    '''
-    user = str(users)[7:].replace(" ", " | ")
-    str1 = "Id, Username, Surname, Name, Patronymic, Email"
-    keys = str1.split(", ")
-    values = user. split(" | ")
-    dictionary = dict(zip(keys, values))
-    return dictionary
-    
-    dict_utf = {
-        'u0410': 'А', 'u0430': 'а',
-        'u0411': 'Б', 'u0431': 'б',
-        'u0412': 'В', 'u0432': 'в',
-        'u0413': 'Г', 'u0433': 'г',
-        'u0414': 'Д', 'u0434': 'д',
-        'u0415': 'Е', 'u0435': 'е',
-        'u0401': 'Ё', 'u0451': 'ё',
-        'u0416': 'Ж', 'u0436': 'ж',
-        'u0417': 'З', 'u0437': 'з',
-        'u0418': 'И', 'u0438': 'и',
-        'u0419': 'Й', 'u0439': 'й',
-        'u041a': 'К', 'u043a': 'к',
-        'u041b': 'Л', 'u043b': 'л',
-        'u041c': 'М', 'u043c': 'м',
-        'u041d': 'Н', 'u043d': 'н',
-        'u041e': 'О', 'u043e': 'о',
-        'u041f': 'П', 'u043f': 'п',
-        'u0420': 'Р', 'u0440': 'р',
-        'u0421': 'С', 'u0441': 'с',
-        'u0422': 'Т', 'u0442': 'т',
-        'u0423': 'У', 'u0443': 'у',
-        'u0424': 'Ф', 'u0444': 'ф',
-        'u0425': 'Х', 'u0445': 'х',
-        'u0426': 'Ц', 'u0446': 'ц',
-        'u0427': 'Ч', 'u0447': 'ч',
-        'u0428': 'Ш', 'u0448': 'ш',
-        'u0429': 'Щ', 'u0449': 'щ',
-        'u042a': 'Ъ', 'u044a': 'ъ',
-        'u042d': 'Ы', 'u044b': 'ы',
-        'u042c': 'Ь', 'u044c': 'ь',
-        'u042d': 'Э', 'u044d': 'э',
-        'u042e': 'Ю', 'u044e': 'ю',
-        'u042f': 'Я', 'u044f': 'я',
-    }
-
-    s_surname = user.surname
-    repr(s_surname)
-    data_surname = json.dumps(s_surname)
-    json.dumps(s_surname, ensure_ascii=False)
-    p_text_surname = json.loads(data_surname)
-    surname = p_text_surname
-    #return surname
-
-    s_name = user.name
-    repr(s_name)
-    data_name = json.dumps(s_name)
-    json.dumps(s_name, ensure_ascii=False)
-    name = json.loads(data_name)
-    #return name
-
-    s_patronymic = user.patronymic
-    repr(s_patronymic)
-    data_patronymic = json.dumps(s_patronymic)
-    json.dumps(s_patronymic, ensure_ascii=False)
-    patronymic = json.loads(data_patronymic)
-    #return patronymic
-
-    s_about = user.about
-    repr(s_about)
-    data_about = json.dumps(s_about)
-    json.dumps(s_about, ensure_ascii=False)
-    about = json.loads(data_about)
-    #return about
-    '''
-
     return jsonify({'Id': user.id,
                     'Username': user.username,
                     'Surname': user.surname,
@@ -190,14 +143,116 @@ def profile(username):
                     'Email': user.email,
                     'About': user.about})
 
+    '''
+        user = str(users)[7:].replace(" ", " | ")
+        str1 = "Id, Username, Surname, Name, Patronymic, Email"
+        keys = str1.split(", ")
+        values = user. split(" | ")
+        dictionary = dict(zip(keys, values))
+        return dictionary
 
-# изменение информации в профиле
+        dict_utf = {
+            'u0410': 'А', 'u0430': 'а',
+            'u0411': 'Б', 'u0431': 'б',
+            'u0412': 'В', 'u0432': 'в',
+            'u0413': 'Г', 'u0433': 'г',
+            'u0414': 'Д', 'u0434': 'д',
+            'u0415': 'Е', 'u0435': 'е',
+            'u0401': 'Ё', 'u0451': 'ё',
+            'u0416': 'Ж', 'u0436': 'ж',
+            'u0417': 'З', 'u0437': 'з',
+            'u0418': 'И', 'u0438': 'и',
+            'u0419': 'Й', 'u0439': 'й',
+            'u041a': 'К', 'u043a': 'к',
+            'u041b': 'Л', 'u043b': 'л',
+            'u041c': 'М', 'u043c': 'м',
+            'u041d': 'Н', 'u043d': 'н',
+            'u041e': 'О', 'u043e': 'о',
+            'u041f': 'П', 'u043f': 'п',
+            'u0420': 'Р', 'u0440': 'р',
+            'u0421': 'С', 'u0441': 'с',
+            'u0422': 'Т', 'u0442': 'т',
+            'u0423': 'У', 'u0443': 'у',
+            'u0424': 'Ф', 'u0444': 'ф',
+            'u0425': 'Х', 'u0445': 'х',
+            'u0426': 'Ц', 'u0446': 'ц',
+            'u0427': 'Ч', 'u0447': 'ч',
+            'u0428': 'Ш', 'u0448': 'ш',
+            'u0429': 'Щ', 'u0449': 'щ',
+            'u042a': 'Ъ', 'u044a': 'ъ',
+            'u042d': 'Ы', 'u044b': 'ы',
+            'u042c': 'Ь', 'u044c': 'ь',
+            'u042d': 'Э', 'u044d': 'э',
+            'u042e': 'Ю', 'u044e': 'ю',
+            'u042f': 'Я', 'u044f': 'я',
+        }
+
+        s_surname = user.surname
+        repr(s_surname)
+        data_surname = json.dumps(s_surname)
+        json.dumps(s_surname, ensure_ascii=False)
+        p_text_surname = json.loads(data_surname)
+        surname = p_text_surname
+        #return surname
+
+        s_name = user.name
+        repr(s_name)
+        data_name = json.dumps(s_name)
+        json.dumps(s_name, ensure_ascii=False)
+        name = json.loads(data_name)
+        #return name
+
+        s_patronymic = user.patronymic
+        repr(s_patronymic)
+        data_patronymic = json.dumps(s_patronymic)
+        json.dumps(s_patronymic, ensure_ascii=False)
+        patronymic = json.loads(data_patronymic)
+        #return patronymic
+
+        s_about = user.about
+        repr(s_about)
+        data_about = json.dumps(s_about)
+        json.dumps(s_about, ensure_ascii=False)
+        about = json.loads(data_about)
+        #return about
+        '''
+
+# изменение профиля
 @app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
+@login_required
 def profile_edit(username):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(username=username).first()
-    return render_template("user_profile.html", user=user)
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        data = request.json.get('data')
+        if user:
+            data.get.username = user.username
+            data.get.surname = user.surname
+            data.form.get.name = user.name
+            data.get.patronymic = user.patronymic
+            data.get.about = user.about
+            data.get.email = user.email
+            data.get.password = user.password
+        else:
+            abort(404)
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        if user:
+            user.username = data.get.username
+            user.surname = data.get.surname
+            user.name = data.form.get.name
+            user.patronymic = data.get.patronymic
+            user.about = data.get.about
+            user.email = data.get.email
+            user.password = data.get.password
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return jsonify({'success': "OK"})
 
+# удаление профиля
 @app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
 @login_required
 def news_delete(username):
@@ -210,21 +265,83 @@ def news_delete(username):
         abort(404)
     return redirect('/')
 
-@app.route("/about", methods=['GET', 'POST'])
-def about():
-    return "0"
+# добавление задач
+@app.route('/task/add', methods=['GET', 'POST'])
+def add_task():
+    db_sess = db_session.create_session()
+    data = request.json.get('data')
+    task_name = data.get('task_name')
+    host_id = current_user
+    begin_date = data.get('begin_date')
+    end_date = data.get('end_date')
+    is_private = data.get('is_private')
+    priority = data.get('priority')
+    description = data.get('description')
+    created_date = data.get('created_date')
+    task = Task(
+        task_name=task_name,
+        host_id=host_id,
+        begin_date=begin_date,
+        end_date=end_date,
+        is_private=is_private,
+        priority=priority,
+        description=description,
+        created_date=created_date
+    )
+    db_sess.add(task)
+    db_sess.commit()
+    return jsonify({'success': "OK"})
+'''
+# редактирование задач
+@app.route("/tasks/<string:username>/edit", methods=['GET', 'POST'])
+@login_required
+def profile_edit(username):
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        data = request.json.get('data')
+        if user:
+            data.get.username = user.username
+            data.get.surname = user.surname
+            data.form.get.name = user.name
+            data.get.patronymic = user.patronymic
+            data.get.about = user.about
+            data.get.email = user.email
+            data.get.password = user.password
+        else:
+            abort(404)
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        if user:
+            user.username = data.get.username
+            user.surname = data.get.surname
+            user.name = data.form.get.name
+            user.patronymic = data.get.patronymic
+            user.about = data.get.about
+            user.email = data.get.email
+            user.password = data.get.password
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return jsonify({'success': "OK"})
 
+# удаление задач
+@app.route("/tasks/delete", methods=['GET', 'POST'])
+def news_delete(...):
+    db_sess = db_session.create_session()
+    task = db_sess.query(Task).filter_by(...).first()
+    if task:
+        db_sess.delete(task)
+        db_sess.commit()
+    else:
+        abort(404)
+    #return redirect('/') ?
+'''
 @app.route('/test/Roman', methods=['GET'])
 def test():
-    users = [{'id': 1, 'username': 'Roman'},
-             {'id': 2, 'username': 'Ilya'}]
-    response = jsonify(users)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Headers',
-                         'Authorization, Origin, X-Requested-With, Accept, X-PINGOTHER, Content-Type')
-
+    response = jsonify({'success': 'OK'})
     return response
 
 if __name__ == '__main__':
