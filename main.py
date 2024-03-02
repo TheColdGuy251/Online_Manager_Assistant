@@ -44,6 +44,33 @@ def index():
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        data = request.json.get('data')
+        username = data.get('username')
+        surname = data.get('surname')
+        name = data.form.get('name')
+        patronymic = data.get('patronymic')
+        about = data.get('about')
+        email = data.get('email')
+        password = data.get('password')
+        username = str(username).lower().strip()
+        if db_sess.query(User).filter(User.username == username).first():
+            return {'success': 'user_exists'}
+        if db_sess.query(User).filter(User.email == email).first():
+            return {'success': 'email_exists'}
+        user = User(
+            username=username,
+            surname=surname,
+            name=name,
+            patronymic=patronymic,
+            email=email,
+            about=about
+        )
+        user.set_password(password)
+        db_sess.add(user)
+        db_sess.commit()
+        return jsonify({'success': "OK"})
     form = RegisterForm()
     db_sess = db_session.create_session()
     if form.validate_on_submit():
