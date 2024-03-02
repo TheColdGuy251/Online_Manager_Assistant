@@ -107,6 +107,7 @@ def logout():
 def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter_by(username=username).first()
+
     '''
     user = str(users)[7:].replace(" ", " | ")
     str1 = "Id, Username, Surname, Name, Patronymic, Email"
@@ -114,9 +115,81 @@ def profile(username):
     values = user. split(" | ")
     dictionary = dict(zip(keys, values))
     return dictionary
+    
+    dict_utf = {
+        'u0410': 'А', 'u0430': 'а',
+        'u0411': 'Б', 'u0431': 'б',
+        'u0412': 'В', 'u0432': 'в',
+        'u0413': 'Г', 'u0433': 'г',
+        'u0414': 'Д', 'u0434': 'д',
+        'u0415': 'Е', 'u0435': 'е',
+        'u0401': 'Ё', 'u0451': 'ё',
+        'u0416': 'Ж', 'u0436': 'ж',
+        'u0417': 'З', 'u0437': 'з',
+        'u0418': 'И', 'u0438': 'и',
+        'u0419': 'Й', 'u0439': 'й',
+        'u041a': 'К', 'u043a': 'к',
+        'u041b': 'Л', 'u043b': 'л',
+        'u041c': 'М', 'u043c': 'м',
+        'u041d': 'Н', 'u043d': 'н',
+        'u041e': 'О', 'u043e': 'о',
+        'u041f': 'П', 'u043f': 'п',
+        'u0420': 'Р', 'u0440': 'р',
+        'u0421': 'С', 'u0441': 'с',
+        'u0422': 'Т', 'u0442': 'т',
+        'u0423': 'У', 'u0443': 'у',
+        'u0424': 'Ф', 'u0444': 'ф',
+        'u0425': 'Х', 'u0445': 'х',
+        'u0426': 'Ц', 'u0446': 'ц',
+        'u0427': 'Ч', 'u0447': 'ч',
+        'u0428': 'Ш', 'u0448': 'ш',
+        'u0429': 'Щ', 'u0449': 'щ',
+        'u042a': 'Ъ', 'u044a': 'ъ',
+        'u042d': 'Ы', 'u044b': 'ы',
+        'u042c': 'Ь', 'u044c': 'ь',
+        'u042d': 'Э', 'u044d': 'э',
+        'u042e': 'Ю', 'u044e': 'ю',
+        'u042f': 'Я', 'u044f': 'я',
+    }
+
+    s_surname = user.surname
+    repr(s_surname)
+    data_surname = json.dumps(s_surname)
+    json.dumps(s_surname, ensure_ascii=False)
+    p_text_surname = json.loads(data_surname)
+    surname = p_text_surname
+    #return surname
+
+    s_name = user.name
+    repr(s_name)
+    data_name = json.dumps(s_name)
+    json.dumps(s_name, ensure_ascii=False)
+    name = json.loads(data_name)
+    #return name
+
+    s_patronymic = user.patronymic
+    repr(s_patronymic)
+    data_patronymic = json.dumps(s_patronymic)
+    json.dumps(s_patronymic, ensure_ascii=False)
+    patronymic = json.loads(data_patronymic)
+    #return patronymic
+
+    s_about = user.about
+    repr(s_about)
+    data_about = json.dumps(s_about)
+    json.dumps(s_about, ensure_ascii=False)
+    about = json.loads(data_about)
+    #return about
     '''
-    return jsonify({'Id': user.id, 'Username': user.username, 'Surname': user.surname, 'Name': user.name, 'Patrinymic': user.patronymic, 'Email': user.email})
-    #<User> 1 roman Улеев Роман Игоревич romanuleev178@gmail.com
+
+    return jsonify({'Id': user.id,
+                    'Username': user.username,
+                    'Surname': user.surname,
+                    'Name': user.name,
+                    'Patronymic': user.patronymic,
+                    'Email': user.email,
+                    'About': user.about})
+
 
 # изменение информации в профиле
 @app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
@@ -125,9 +198,21 @@ def profile_edit(username):
     user = db_sess.query(User).filter_by(username=username).first()
     return render_template("user_profile.html", user=user)
 
+@app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
+@login_required
+def news_delete(username):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(username=username).first()
+    if user:
+        db_sess.delete(user)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/')
+
 @app.route("/about", methods=['GET', 'POST'])
 def about():
-    return render_template()
+    return "0"
 
 @app.route('/test/Roman', methods=['GET'])
 def test():
