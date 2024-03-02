@@ -43,6 +43,8 @@ def index():
     return jsonify({'success': "OK"})
 
 
+
+
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
