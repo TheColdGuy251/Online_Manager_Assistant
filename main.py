@@ -367,6 +367,15 @@ def news_delete(id):
         abort(404)
     return jsonify({'success': 'OK'})
 
+@app.route("/", methods=['GET', 'POST'])
+def index():
+    db_sess = db_session.create_session()
+    if request.method == "POST":
+        data = request.json.get('data')
+        tasks = db_sess.query(Task).filter(Task.name == data.get("task_name")).all()
+        return jsonify({'success': "OK", 'tasks': tasks})
+    return jsonify({'success': "OK"})
+
 @app.route('/test/Roman', methods=['GET'])
 def test():
     response = jsonify({'success': 'OK'})
