@@ -185,6 +185,8 @@ def profile_edit(username):
         else:
             abort(404)
     return jsonify({'success': "OK"})
+
+
 # удаление профиля
 @app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
 @login_required
@@ -198,8 +200,6 @@ def news_delete(username):
         abort(404)
     return redirect('/')
 
-
-@app.route('/test/Ilya', methods=['GET'])
 
 @app.route('/test/Vlada', methods=['GET'])
 def test():
