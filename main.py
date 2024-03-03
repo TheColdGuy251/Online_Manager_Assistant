@@ -40,6 +40,10 @@ def load_user(user_id):
 @app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
+    if request.method == "POST":
+        data = request.json.get('data')
+        tasks = db_sess.query(Task).filter(Task.name == data.get("task_name")).all()
+        return jsonify({'success': "OK", 'tasks': tasks})
     return jsonify({'success': "OK"})
 
 
@@ -174,28 +178,63 @@ def profile_edit(username):
             user.about = data.get('about')
             user.email = data.get('email')
             password = data.get('password')
-            if db_sess.query(User).filter(User.username == user.username).first():
+            if db_sess.query(User).filter(User.username == user.username).first() and not current_user:
                 return {'success': 'user_exists'}
-            if db_sess.query(User).filter(User.email == user.email).first():
+            if db_sess.query(User).filter(User.email == user.email).first() and not current_user:
                 return {'success': 'email_exists'}
             user.set_password(password)
 
             db_sess.commit()
-            return redirect('/')
+            return jsonify({'success': "OK"})
         else:
-            abort(404)
+            return jsonify({'data': 'User not found'})
+    return jsonify({'success': "OK"})
+
+
+# удаление профиля
+@app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
+@login_required
+def news_delete(username):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(username=username).first()
+    if user:
+        db_sess.delete(user)
+        db_sess.commit()
+    else:
+        return jsonify({'data': 'User not found'})
+    return jsonify({'success': "OK"})
+
+
+@app.route('/task/add', methods=['GET', 'POST'])
+def add_task():
+    db_sess = db_session.create_session()
+    data = request.json.get('data')
+    task_name = data.get('task_name')
+    host_id = current_user
+    begin_date = data.get('begin_date')
+    end_date = data.get('end_date')
+    is_private = data.get('is_private')
+    priority = data.get('priority')
+    description = data.get('description')
+    created_date = data.get('created_date')
+    task = Task(
+        task_name=task_name,
+        host_id=host_id,
+        begin_date=begin_date,
+        end_date=end_date,
+        is_private=is_private,
+        priority=priority,
+        description=description,
+        created_date=created_date
+    )
+    db_sess.add(task)
+    db_sess.commit()
     return jsonify({'success': "OK"})
 
 
 @app.route('/test/Ilya', methods=['GET'])
 def test():
     response = jsonify({'success': 'OK'})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Headers',
-                         'Authorization, Origin, X-Requested-With, Accept, X-PINGOTHER, Content-Type')
-
     return response
 
 
