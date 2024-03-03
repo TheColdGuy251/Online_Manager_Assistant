@@ -37,10 +37,10 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
-    return render_template("index.html")
+    return jsonify({'success': "OK"})
 
 
 # регистрация аккаунта
@@ -57,7 +57,6 @@ def reqister():
         about = data.get('about')
         email = data.get('email')
         password = data.get('password')
-        username = str(username).lower().strip()
         if db_sess.query(User).filter(User.username == username).first():
             return {'success': 'user_exists'}
         if db_sess.query(User).filter(User.email == email).first():
@@ -186,44 +185,6 @@ def profile_edit(username):
         else:
             abort(404)
     return jsonify({'success': "OK"})
-
-
-# информация о пользователе
-@app.route("/profile/<string:username>/info", methods=['GET', 'POST'])
-def profile_info(username):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(username=username).first()
-    return jsonify({'Username': user.username, 'Surname': user.surname, 'Name': user.name, 'Patronymic': user.patronymic, 'Email': user.email})
-
-
-# добавление задач
-@app.route('/task/add', methods=['GET', 'POST'])
-def add_task():
-    db_sess = db_session.create_session()
-    data = request.json.get('data')
-    task_name = data.get('task_name')
-    host_id = current_user
-    begin_date = data.get('begin_date')
-    end_date = data.get('end_date')
-    is_private = data.get('is_private')
-    priority = data.get('priority')
-    description = data.get('description')
-    created_date = data.get('created_date')
-    task = Task(
-        task_name=task_name,
-        host_id=host_id,
-        begin_date=begin_date,
-        end_date=end_date,
-        is_private=is_private,
-        priority=priority,
-        description=description,
-        created_date=created_date
-    )
-    db_sess.add(task)
-    db_sess.commit()
-    return jsonify({'success': "OK"})
-
-
 # удаление профиля
 @app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
 @login_required
@@ -237,6 +198,8 @@ def news_delete(username):
         abort(404)
     return redirect('/')
 
+
+@app.route('/test/Ilya', methods=['GET'])
 
 @app.route('/test/Vlada', methods=['GET'])
 def test():

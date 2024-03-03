@@ -21,7 +21,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
     def __repr__(self):
-        return f'<User> {self.id} {self.username} {self.surname} {self.name} {self.patronymic} {self.email}'
+        return f'<User> {self.id} {self.username} {self.surname} {self.name} {self.patronymic} {self.email} {self.about} {self.created_date}'
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
