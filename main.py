@@ -46,32 +46,63 @@ def index():
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
+    form = RegisterForm()
+    if request.method == "POST" and not form.validate_on_submit():
+        db_sess = db_session.create_session()
+        data = request.json.get('data')
+        username = data.get('username')
+        surname = data.get('surname')
+        name = data.form.get('name')
+        patronymic = data.get('patronymic')
+        about = data.get('about')
+        email = data.get('email')
+        password = data.get('password')
+        if db_sess.query(User).filter(User.username == username).first():
+            return {'success': 'user_exists'}
+        if db_sess.query(User).filter(User.email == email).first():
+            return {'success': 'email_exists'}
+        user = User(
+            username=username,
+            surname=surname,
+            name=name,
+            patronymic=patronymic,
+            email=email,
+            about=about
+        )
+        user.set_password(password)
+        db_sess.add(user)
+        db_sess.commit()
+        return jsonify({'success': "OK"})
     db_sess = db_session.create_session()
-    data = request.json.get('data')
-    username = data.get('username')
-    surname = data.get('surname')
-    name = data.form.get('name')
-    patronymic = data.get('patronymic')
-    about = data.get('about')
-    email = data.get('email')
-    password = data.get('password')
-    username = str(username).lower().strip()
-    if db_sess.query(User).filter(User.username == username).first():
-        return {'success': 'user_exists'}
-    if db_sess.query(User).filter(User.email == email).first():
-        return {'success': 'email_exists'}
-    user = User(
-        username=username,
-        surname=surname,
-        name=name,
-        patronymic=patronymic,
-        email=email,
-        about=about
-    )
-    user.set_password(password)
-    db_sess.add(user)
-    db_sess.commit()
-    return jsonify({'success': "OK"})
+    if form.validate_on_submit():
+        form.username.data = str(form.username.data).lower().strip()
+        if form.password.data != form.password_again.data:
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Пароли не совпадают")
+
+        if db_sess.query(User).filter(User.username == form.username.data).first():
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Такое имя пользователя уже есть")
+        if db_sess.query(User).filter(User.email == form.email.data).first():
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Такой адрес электронной почты уже есть")
+        if " " in form.username.data:
+            return render_template('register.html', title='Регистрация',
+                                   form=form, message="Нельзя использовать пробел в имени")
+        user = User(
+            username=form.username.data,
+            surname=form.surname.data,
+            name=form.name.data,
+            patronymic=form.patronymic.data,
+            email=form.email.data,
+            about=form.about.data
+        )
+        user.set_password(form.password.data)
+        db_sess.add(user)
+        db_sess.commit()
+        return redirect('/login')
+
+    return render_template('register.html', title='Регистрация', form=form)
 
 
 # вход в аккаунт
@@ -80,19 +111,19 @@ def login():
     data = request.json.get('data')
     auth = data.get('auth')
     password = data.get('password')
+    remember = data.get('remember')
     db_sess = db_session.create_session()
     if "@" in str(auth):
         user = db_sess.query(User).filter(User.email == auth).first()
-        if user and user.check_password(password):
-            login_user(user, remember=True)
-            return jsonify({'success': "OK"})
-        return jsonify({'success': "WrongAuth"})
     else:
         user = db_sess.query(User).filter(User.username == auth).first()
-        if user and user.check_password(password):
+    if user and user.check_password(password):
+        if bool(remember):
             login_user(user, remember=True)
-            return jsonify({'success': "OK"})
-        return jsonify({'success': "WrongAuth"})
+        else:
+            login_user(user, remember=False)
+        return jsonify({'success': "OK"})
+    return jsonify({'success': "WrongAuth"})
 
 
 # выход из аккаунта
@@ -110,17 +141,50 @@ def profile(username):
     user = db_sess.query(User).filter_by(username=username).first()
 
     if user:
-        user_dict = {'username': user.username, 'surname': user.surname.decode('utf-8'), 'name': user.name.encode('utf-8'), 'patronymic': user.patronymic.decode('utf-8'), 'about': user.about.decode('utf-8'), 'created_date': user.created_date}
+        user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
+                     'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
+                     'created_date': user.created_date}
         return jsonify({'data': user_dict})
     return jsonify({'data': 'User not found'})
 
 
-# изменение информации в профиле
+# изменение профиля
 @app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
+@login_required
 def profile_edit(username):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(username=username).first()
-    return render_template("user_profile.html", user=user)
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        if user:
+            user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
+                         'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
+                         'created_date': user.created_date}
+            return jsonify({'data': user_dict})
+        else:
+            jsonify({'data': 'User not found'})
+    if request.method == "POST":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        if user:
+            data = request.json.get('data')
+            user.username = data.get('username')
+            user.surname = data.get('surname')
+            user.name = data.form.get('name')
+            user.patronymic = data.get('patronymic')
+            user.about = data.get('about')
+            user.email = data.get('email')
+            password = data.get('password')
+            if db_sess.query(User).filter(User.username == user.username).first():
+                return {'success': 'user_exists'}
+            if db_sess.query(User).filter(User.email == user.email).first():
+                return {'success': 'email_exists'}
+            user.set_password(password)
+
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return jsonify({'success': "OK"})
 
 
 @app.route('/test/Ilya', methods=['GET'])

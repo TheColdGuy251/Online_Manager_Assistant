@@ -6,7 +6,7 @@ from flask_login import UserMixin
 from sqlalchemy_serializer import SerializerMixin
 
 
-class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
+class TaskParticip(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'task_participants'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
