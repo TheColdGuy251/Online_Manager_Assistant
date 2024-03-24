@@ -269,6 +269,30 @@ def profile_delete(username):
         return jsonify({'success': False, 'Error': 'User not found'})
     return jsonify({'success': True})
 
-
+@app.route('/task/add', methods=['GET', 'POST'])
+def add_task():
+    db_sess = db_session.create_session()
+    data = request.json.get('data')
+    task_name = data.get('task_name')
+    host_id = current_user
+    begin_date = data.get('begin_date')
+    end_date = data.get('end_date')
+    is_private = data.get('is_private')
+    priority = data.get('priority')
+    description = data.get('description')
+    created_date = data.get('created_date')
+    task = Task(
+        task_name=task_name,
+        host_id=host_id,
+        begin_date=begin_date,
+        end_date=end_date,
+        is_private=is_private,
+        priority=priority,
+        description=description,
+        created_date=created_date
+    )
+    db_sess.add(task)
+    db_sess.commit()
+    return jsonify({'success': "OK"})
 if __name__ == '__main__':
     main()
