@@ -269,6 +269,7 @@ def profile_delete(username):
         return jsonify({'success': False, 'Error': 'User not found'})
     return jsonify({'success': True})
 
+
 @app.route('/task/add', methods=['GET', 'POST'])
 def add_task():
     db_sess = db_session.create_session()
