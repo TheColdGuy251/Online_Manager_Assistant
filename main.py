@@ -5,8 +5,6 @@ from datetime import datetime, timedelta, timezone
 from data.users import User
 from data.tasks import Task
 from data.calendar import Calendar
-from forms.register_form import RegisterForm
-from forms.login_form import LoginForm
 from sqlalchemy import text
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
@@ -16,6 +14,7 @@ app.config['SECRET_KEY'] = 'tyuiu_secret_key'
 CORS(app)
 jwt = JWTManager(app)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=14)
+
 
 def main():
     db_session.global_init("db/users.db")
@@ -129,7 +128,7 @@ def load_calendar():
         return jsonify({'success': True, 'data': data})
 
 
-@app.route("/tasks/add", methods=['POST'])
+@app.route("/calendar/add", methods=['POST'])
 @jwt_required()
 def add_calendar():
     db_sess = db_session.create_session()
@@ -270,30 +269,5 @@ def profile_delete(username):
     return jsonify({'success': True})
 
 
-@app.route('/task/add', methods=['GET', 'POST'])
-def add_task():
-    db_sess = db_session.create_session()
-    data = request.json.get('data')
-    task_name = data.get('task_name')
-    host_id = current_user
-    begin_date = data.get('begin_date')
-    end_date = data.get('end_date')
-    is_private = data.get('is_private')
-    priority = data.get('priority')
-    description = data.get('description')
-    created_date = data.get('created_date')
-    task = Task(
-        task_name=task_name,
-        host_id=host_id,
-        begin_date=begin_date,
-        end_date=end_date,
-        is_private=is_private,
-        priority=priority,
-        description=description,
-        created_date=created_date
-    )
-    db_sess.add(task)
-    db_sess.commit()
-    return jsonify({'success': "OK"})
 if __name__ == '__main__':
     main()
