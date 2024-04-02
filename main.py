@@ -4,6 +4,7 @@ from data import db_session
 from datetime import datetime, timedelta, timezone
 from data.users import User
 from data.tasks import Task
+from data.friends import Friends
 from data.calendar import Calendar
 from sqlalchemy import text
 from flask_cors import CORS
@@ -63,6 +64,7 @@ def load_task():
         data = {}
         for i, task in enumerate(tasks):
             data[i] = {
+                "id": task.id,
                 "task_name": task.task_name,
                 "begin_date": task.begin_date,
                 "end_date": task.end_date,
@@ -81,7 +83,7 @@ def load_task():
 
 @app.route("/tasks/add", methods=['POST'])
 @jwt_required()
-def addtask():
+def add_task():
     db_sess = db_session.create_session()
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
@@ -103,6 +105,50 @@ def addtask():
     )
     db_sess.add(task)
     db_sess.commit()
+    return jsonify({'success': True})
+
+
+@app.route("/tasks/edit/<int:task_id>", methods=['POST'])
+@jwt_required()
+def edit_task(task_id):
+    db_sess = db_session.create_session()
+    current_user = get_jwt_identity()
+    user = db_sess.query(User).filter(User.id == current_user).first()
+    if not user:
+        return jsonify({'error': "User not found"}), 404
+    data = request.json.get('data')
+    task = db_sess.query(Task).filter(Task.id == task_id).first()
+    if task:
+        task.task_name = data.get('task_name'),
+        task.begin_date = datetime.strptime(data.get('begin_date'), '%d.%m.%Y').date(),
+        task.end_date = datetime.strptime(data.get('end_date'), '%d.%m.%Y').date(),
+        task.condition = data.get('condition'),
+        task.complete_perc = data.get('complete_perc'),
+        task.remind = bool(data.get('remind')),
+        task.date_remind = datetime.strptime(data.get('date_remind'), '%d.%m.%Y').date(),
+        task.is_private = bool(data.get('is_private')),
+        task.priority = data.get('priority'),
+        task.description = data.get('description'),
+
+    if db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first():
+        db_sess.commit()
+    return jsonify({'success': True})
+
+
+@app.route("/tasks/delete/<int:task_id>", methods=['POST'])
+@jwt_required()
+def delete_task(task_id):
+    db_sess = db_session.create_session()
+    current_user = get_jwt_identity()
+    user = db_sess.query(User).filter(User.id == current_user).first()
+    if not user:
+        return jsonify({'error': "User not found"}), 404
+    task = db_sess.query(Task).filter(Task.id == task_id).first()
+    if task:
+        db_sess.delete(task)
+        db_sess.commit()
+    else:
+        abort(404)
     return jsonify({'success': True})
 
 
@@ -149,6 +195,102 @@ def add_calendar():
     db_sess.commit()
     return jsonify({'success': True})
 
+"""
+@app.route("/contacts", methods=['GET'])
+@jwt_required()
+def load_contacts():
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        current_user = get_jwt_identity()
+        user = db_sess.query(User).filter(User.id == current_user).first()
+        if not user:
+            return jsonify({'error': "User not found"}), 404
+        contacts = db_sess.query(Friends).filter(Friends.sender_id == user.id or Friends.sender_id == user.id,
+                                                 Friends.confirmed).all()
+        data = {}
+        for i, contact in enumerate(contacts):
+            
+            data[i] = {
+                "id": users.id,
+                "username": users.username,
+                "surname": users.surname,
+                "name": users.name,
+                "patronymic": users.patronymic,
+                "about": users.about,
+            }
+        return jsonify({'success': True, 'data': data})
+
+"""
+
+
+@app.route("/contacts/find", methods=['POST'])
+@jwt_required()
+def load_contacts():
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        current_user = get_jwt_identity()
+        user = db_sess.query(User).filter(User.id == current_user).first()
+        data = request.json.get('data')
+        username = data.get('username')
+        if not user:
+            return jsonify({'error': "User not found"}), 404
+        users = db_sess.query(User).filter(username in User.username).all()
+        data = {}
+        for i, user in enumerate(users):
+            data[i] = {
+                "id": users.id,
+                "username": users.username,
+                "surname": users.surname,
+                "name": users.name,
+                "patronymic": users.patronymic,
+                "about": users.about,
+            }
+        return jsonify({'success': True, 'data': data})
+
+
+"""
+
+@app.route("/contacts/requests", methods=['GET'])
+@jwt_required()
+def load_contacts():
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        current_user = get_jwt_identity()
+        user = db_sess.query(User).filter(User.id == current_user).first()
+        if not user:
+            return jsonify({'error': "User not found"}), 404
+        contacts = db_sess.query(Friends).filter(Friends.receiver_id == user.id,
+                                                 not Friends.confirmed).all()
+        data = {}
+        for i, contact in enumerate(contacts):
+            data[i] = {
+                "id": contacts.id,
+                "sender_id": contacts.sender_id,
+                "receiver_id": contacts.receiver_id,
+                "confirmed": contacts.confirmed,
+            }
+        return jsonify({'success': True, 'data': data})
+
+
+@app.route("/contacts/add/<int:id>", methods=['POST'])
+@jwt_required()
+def add_contact(id):
+    db_sess = db_session.create_session()
+    current_user = get_jwt_identity()
+    data = request.json.get('data')
+    username = data.get('username')
+    user = db_sess.query(User).filter(User.id == current_user).first()
+    if not user:
+        return jsonify({'error': "User not found"}), 404
+    contact = db_sess.query(User).filter(User.id == id).first()
+    if db_sess.query(Friends).filter(contact.id == sender_id).first()
+    if task:
+        db_sess.delete(task)
+        db_sess.commit()
+    else:
+        abort(404)
+    return jsonify({'success': True})
+"""
 
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
