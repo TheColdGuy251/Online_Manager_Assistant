@@ -34,7 +34,7 @@ def bad_request(_):
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    return jsonify({'success': "OK"})
+    return jsonify({'success': True})
 
 
 @app.after_request
@@ -59,11 +59,11 @@ def load_task():
         current_user = get_jwt_identity()
         user = db_sess.query(User).filter(User.id == current_user).first()
         if not user:
-            return jsonify({'error': "User not found"}), 404
+            return jsonify({'success': False, 'error': "User not found"}), 404
         tasks = db_sess.query(Task).filter(Task.host_id == user.id).all()
-        data = {}
-        for i, task in enumerate(tasks):
-            data[i] = {
+        data = []
+        for task in tasks:
+            data.append({
                 "id": task.id,
                 "task_name": task.task_name,
                 "begin_date": task.begin_date,
@@ -77,7 +77,7 @@ def load_task():
                 "host_id": task.host_id,
                 "description": task.description,
                 "created_date": task.created_date
-            }
+            })
         return jsonify({'success': True, 'data': data})
 
 
@@ -88,7 +88,7 @@ def add_task():
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
-        return jsonify({'error': "User not found"}), 404
+        return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
     task = Task(
         task_name=data.get('task_name'),
@@ -115,7 +115,7 @@ def edit_task(task_id):
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
-        return jsonify({'error': "User not found"}), 404
+        return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
     task = db_sess.query(Task).filter(Task.id == task_id).first()
     if task:
@@ -160,7 +160,7 @@ def load_calendar():
         current_user = get_jwt_identity()
         user = db_sess.query(User).filter(User.id == current_user).first()
         if not user:
-            return jsonify({'error': "User not found"}), 404
+            return jsonify({'success': False, 'error': "User not found"}), 404
         calendar = db_sess.query(Calendar).filter(Calendar.host_id == user.id).all()
         data = {}
         for i, task in enumerate(calendar):
@@ -233,7 +233,7 @@ def load_contacts():
         data = request.json.get('data')
         username = data.get('username')
         if not user:
-            return jsonify({'error': "User not found"}), 404
+            return jsonify({'success': False, 'error': "User not found"}), 404
         users = db_sess.query(User).filter(username in User.username).all()
         data = {}
         for i, user in enumerate(users):
@@ -354,8 +354,8 @@ def profile(username):
         user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
                      'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
                      'created_date': user.created_date}
-        return jsonify({'data': user_dict})
-    return jsonify({'data': 'User not found'})
+        return jsonify({'success': True, 'data': user_dict})
+    return jsonify({'success': False, 'data': 'User not found'})
 
 
 # изменение профиля
@@ -369,7 +369,7 @@ def profile_edit(username):
             user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
                          'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
                          'created_date': user.created_date}
-            return jsonify({'data': user_dict})
+            return jsonify({'success': True, 'data': user_dict})
         else:
             jsonify({'data': 'User not found'})
     if request.method == "POST":
@@ -385,16 +385,16 @@ def profile_edit(username):
             user.email = data.get('email')
             password = data.get('password')
             if db_sess.query(User).filter(User.username == user.username).first():
-                return {'success': 'user_exists'}
+                return {'success': False, 'error': 'user_exists'}
             if db_sess.query(User).filter(User.email == user.email).first():
-                return {'success': 'email_exists'}
+                return {'success': False, 'error': 'email_exists'}
             user.set_password(password)
 
             db_sess.commit()
-            return jsonify({'success': "OK"})
+            return jsonify({'success': True})
         else:
-            return jsonify({'data': 'User not found'})
-    return jsonify({'success': "OK"})
+            return jsonify({'success': False, 'error': 'User not found'})
+    return jsonify({'success': True})
 
 
 # удаление профиля
