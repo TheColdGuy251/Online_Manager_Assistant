@@ -334,7 +334,7 @@ def login():
     user = db_sess.query(User).filter(User.email == email).first()
     if user and user.check_password(password):
         access_token = create_access_token(identity=user.id)
-        return jsonify({"access_token": access_token, "login": user.username}), 200
+        return jsonify({'success': True, "access_token": access_token, "login": user.username}), 200
     return jsonify({'success': False, "Error": "WrongAuth"})
 
 
