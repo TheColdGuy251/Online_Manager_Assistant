@@ -63,15 +63,16 @@ def load_task():
         tasks = db_sess.query(Task).filter(Task.host_id == user.id).all()
         data = []
         for task in tasks:
+            formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
             data.append({
                 "id": task.id,
                 "task_name": task.task_name,
-                "begin_date": task.begin_date,
-                "end_date": task.end_date,
+                "begin_date": formatted_begin_date,
+                "end_date": formatted_end_date,
                 "condition": task.condition,
                 "complete_perc": task.complete_perc,
                 "remind": task.remind,
-                "date_remind": task.date_remind,
+                "date_remind": formatted_date_remind,
                 "is_private": task.is_private,
                 "priority": task.priority,
                 "host_id": task.host_id,
