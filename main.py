@@ -78,6 +78,7 @@ def load_task():
                 "description": task.description,
                 "created_date": task.created_date
             })
+        print(task)
         return jsonify({'success': True, 'data': data})
 
 
@@ -108,16 +109,17 @@ def add_task():
     return jsonify({'success': True})
 
 
-@app.route("/tasks/edit/<int:task_id>", methods=['POST'])
+@app.route("/tasks/update", methods=['POST'])
 @jwt_required()
-def edit_task(task_id):
+def edit_task():
     db_sess = db_session.create_session()
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
         return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
-    task = db_sess.query(Task).filter(Task.id == task_id).first()
+    task_id = data.get('task_id')
+    task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
         task.task_name = data.get('task_name'),
         task.begin_date = datetime.strptime(data.get('begin_date'), '%d.%m.%Y').date(),
@@ -135,15 +137,17 @@ def edit_task(task_id):
     return jsonify({'success': True})
 
 
-@app.route("/tasks/delete/<int:task_id>", methods=['POST'])
+@app.route("/tasks/delete", methods=['POST'])
 @jwt_required()
-def delete_task(task_id):
+def delete_task():
     db_sess = db_session.create_session()
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
         return jsonify({'error': "User not found"}), 404
-    task = db_sess.query(Task).filter(Task.id == task_id).first()
+    data = request.json.get('data')
+    task_id = data.get('task_id')
+    task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
         db_sess.delete(task)
         db_sess.commit()
@@ -205,23 +209,21 @@ def load_contacts():
         user = db_sess.query(User).filter(User.id == current_user).first()
         if not user:
             return jsonify({'error': "User not found"}), 404
-        contacts = db_sess.query(Friends).filter(Friends.sender_id == user.id or Friends.sender_id == user.id,
+        contacts = db_sess.query(Friends).filter(Friends.user_id == user.id,
                                                  Friends.confirmed).all()
-        data = {}
-        for i, contact in enumerate(contacts):
-            
-            data[i] = {
-                "id": users.id,
-                "username": users.username,
-                "surname": users.surname,
-                "name": users.name,
-                "patronymic": users.patronymic,
-                "about": users.about,
-            }
+        data = []
+        for contact in contacts:
+
+            data.append({
+                "id": contact.id,
+                "username": contact.username,
+                "surname": contact.surname,
+                "name": contact.name,
+                "patronymic": contact.patronymic,
+                "about": contact.about,
+            })
         return jsonify({'success': True, 'data': data})
-
 """
-
 
 @app.route("/contacts/find", methods=['POST'])
 @jwt_required()
@@ -328,13 +330,18 @@ def reqister():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     data = request.json.get('data')
+    username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.email == email).first()
-    if user and user.check_password(password):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({'success': True, "access_token": access_token, "login": user.username}), 200
+    user1 = db_sess.query(User).filter(User.email == email).first()
+    user2 = db_sess.query(User).filter(User.username == username).first()
+    if user1 and user1.check_password(password):
+        access_token = create_access_token(identity=user1.id)
+        return jsonify({'success': True, "access_token": access_token, "login": user1.username}), 200
+    elif user2 and user2.check_password(password):
+        access_token = create_access_token(identity=user2.id)
+        return jsonify({'success': True, "access_token": access_token, "login": user2.username}), 200
     return jsonify({'success': False, "Error": "WrongAuth"})
 
 

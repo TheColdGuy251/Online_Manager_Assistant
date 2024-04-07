@@ -13,6 +13,7 @@ class Friends(SqlAlchemyBase, UserMixin, SerializerMixin):
     sender_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
     receiver_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
     confirmed = sqlalchemy.Column(sqlalchemy.Boolean)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
 
     def __repr__(self):
-        return f'<Friends> {self.id} {self.sender_id} {self.receiver_id} {self.confirmed}'
+        return f'<Friends> {self.id} {self.sender_id} {self.receiver_id} {self.confirmed} {self.user_id}'
