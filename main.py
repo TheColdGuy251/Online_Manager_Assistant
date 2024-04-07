@@ -118,7 +118,7 @@ def edit_task():
     if not user:
         return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
-    task_id = data.get('task_id')
+    task_id = data.get('id')
     task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
         task.task_name = data.get('task_name')
