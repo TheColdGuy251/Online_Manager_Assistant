@@ -6,7 +6,7 @@ from data.users import User
 from data.tasks import Task
 from data.friends import Friends
 from data.calendar import Calendar
-from sqlalchemy import text
+from sqlalchemy import text, or_
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
 
@@ -79,7 +79,6 @@ def load_task():
                 "description": task.description,
                 "created_date": task.created_date
             })
-        print(task)
         return jsonify({'success': True, 'data': data})
 
 
@@ -198,7 +197,7 @@ def add_calendar():
     db_sess.commit()
     return jsonify({'success': True})
 
-"""
+
 @app.route("/contacts", methods=['GET'])
 @jwt_required()
 def load_contacts():
@@ -208,22 +207,36 @@ def load_contacts():
         user = db_sess.query(User).filter(User.id == current_user).first()
         if not user:
             return jsonify({'error': "User not found"}), 404
-        contacts = db_sess.query(Friends).filter(Friends.user_id == user.id,
-                                                 Friends.confirmed).all()
+        contacts = db_sess.query(Friends).filter(or_(Friends.sender_id == current_user, Friends.receiver_id == current_user)).all()
         data = []
         for contact in contacts:
+            if current_user == contact.sender_id:
+                second_user = db_sess.query(User).filter(User.id == contact.receiver_id).first()
+                data.append({
+                    "id": second_user.id,
+                    "username": second_user.username,
+                    "surname": second_user.surname,
+                    "name": second_user.name,
+                    "patronymic": second_user.patronymic,
+                    "email": second_user.email,
+                    "about": second_user.about,
+                })
+            else:
+                second_user = db_sess.query(User).filter(User.id == contact.sender_id).first()
+                data.append({
+                    "id": second_user.id,
+                    "username": second_user.username,
+                    "surname": second_user.surname,
+                    "name": second_user.name,
+                    "patronymic": second_user.patronymic,
+                    "email": second_user.email,
+                    "about": second_user.about,
+                })
 
-            data.append({
-                "id": contact.id,
-                "username": contact.username,
-                "surname": contact.surname,
-                "name": contact.name,
-                "patronymic": contact.patronymic,
-                "about": contact.about,
-            })
-        return jsonify({'success': True, 'data': data})
+        return jsonify({'success': True, 'user': data})
+
+
 """
-
 @app.route("/contacts/find", methods=['POST'])
 @jwt_required()
 def load_contacts():
@@ -247,7 +260,7 @@ def load_contacts():
                 "about": users.about,
             }
         return jsonify({'success': True, 'data': data})
-
+"""
 
 """
 
@@ -273,25 +286,29 @@ def load_contacts():
         return jsonify({'success': True, 'data': data})
 
 
-@app.route("/contacts/add/<int:id>", methods=['POST'])
+"""
+
+
+@app.route("/contacts/add", methods=['POST'])
 @jwt_required()
-def add_contact(id):
+def add_contact():
     db_sess = db_session.create_session()
     current_user = get_jwt_identity()
     data = request.json.get('data')
-    username = data.get('username')
+    username = data.get('login')
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
         return jsonify({'error': "User not found"}), 404
-    contact = db_sess.query(User).filter(User.id == id).first()
-    if db_sess.query(Friends).filter(contact.id == sender_id).first()
-    if task:
-        db_sess.delete(task)
-        db_sess.commit()
-    else:
-        abort(404)
+    contact = db_sess.query(User).filter(User.username == username).first()
+    contact_new = Friends(
+        sender_id=current_user,
+        receiver_id=contact.id,
+        confirmed=False,
+    )
+    db_sess.add(contact_new)
+    db_sess.commit()
     return jsonify({'success': True})
-"""
+
 
 # регистрация аккаунта
 @app.route('/register', methods=['GET', 'POST'])
