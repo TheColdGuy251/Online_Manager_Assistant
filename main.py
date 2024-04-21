@@ -145,8 +145,7 @@ def edit_task():
         task.is_private = bool(data.get('is_private'))
         task.priority = data.get('priority')
         task.description = data.get('description')
-        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
-        db_sess.delete(task_particip)
+        db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         task_participants = data.get('task_particip')
         for participant in task_participants:
             task_partic = TaskParticip(
@@ -172,8 +171,7 @@ def delete_task():
     task_id = data.get('id')
     task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
-        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
-        db_sess.delete(task_particip)
+        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         db_sess.delete(task)
         db_sess.commit()
     else:
