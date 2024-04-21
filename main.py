@@ -7,7 +7,7 @@ from data.tasks import Task
 from data.friends import Friends
 from data.calendar import Calendar
 from sqlalchemy import text, or_, and_
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
 
 app = Flask(__name__)
@@ -275,6 +275,7 @@ def delete_contact():
 
 @app.route("/contacts/find", methods=['GET'])
 @jwt_required()
+@cross_origin()
 def load_users():
     current_user_id = get_jwt_identity()
     db_sess = db_session.create_session()
