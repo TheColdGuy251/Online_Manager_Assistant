@@ -6,7 +6,7 @@ from data.users import User
 from data.tasks import Task
 from data.friends import Friends
 from data.calendar import Calendar
-from sqlalchemy import text, or_
+from sqlalchemy import text, or_, and_
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
 
@@ -198,115 +198,188 @@ def add_calendar():
     return jsonify({'success': True})
 
 
+def get_user_by_id(db_sess, user_id):
+    """Helper function to get a user by ID."""
+    return db_sess.get(User, user_id)
+
+
+def get_current_user(db_sess, current_user_id):
+    """Helper function to get the current user."""
+    return get_user_by_id(db_sess, current_user_id)
+
+
+def get_contact_details(db_sess, contact, current_user_id):
+    """Helper function to get contact details."""
+    other_user_id = contact.receiver_id if contact.sender_id == current_user_id else contact.sender_id
+    other_user = get_user_by_id(db_sess, other_user_id)
+    if other_user:
+        return {
+            "id": other_user.id,
+            "username": other_user.username,
+            "surname": other_user.surname,
+            "name": other_user.name,
+            "patronymic": other_user.patronymic,
+            "email": other_user.email,
+            "about": other_user.about,
+        }
+    return None
+
+
 @app.route("/contacts", methods=['GET'])
 @jwt_required()
 def load_contacts():
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        current_user = get_jwt_identity()
-        user = db_sess.query(User).filter(User.id == current_user).first()
-        if not user:
-            return jsonify({'error': "User not found"}), 404
-        contacts = db_sess.query(Friends).filter(or_(Friends.sender_id == current_user, Friends.receiver_id == current_user)).all()
-        data = []
-        for contact in contacts:
-            if current_user == contact.sender_id:
-                second_user = db_sess.query(User).filter(User.id == contact.receiver_id).first()
-                data.append({
-                    "id": second_user.id,
-                    "username": second_user.username,
-                    "surname": second_user.surname,
-                    "name": second_user.name,
-                    "patronymic": second_user.patronymic,
-                    "email": second_user.email,
-                    "about": second_user.about,
-                })
-            else:
-                second_user = db_sess.query(User).filter(User.id == contact.sender_id).first()
-                data.append({
-                    "id": second_user.id,
-                    "username": second_user.username,
-                    "surname": second_user.surname,
-                    "name": second_user.name,
-                    "patronymic": second_user.patronymic,
-                    "email": second_user.email,
-                    "about": second_user.about,
-                })
+    current_user_id = get_jwt_identity()
+    db_sess = db_session.create_session()
 
-        return jsonify({'success': True, 'user': data})
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
+        return jsonify({'error': "User not found"}), 404
+
+    contacts = db_sess.query(Friends).filter(
+        or_(Friends.sender_id == current_user_id, Friends.receiver_id == current_user_id),
+        Friends.confirmed == 1
+    ).all()
+
+    data = [get_contact_details(db_sess, contact, current_user_id) for contact in contacts]
+    return jsonify({'success': True, 'user': [d for d in data if d]})
 
 
-"""
-@app.route("/contacts/find", methods=['POST'])
+@app.route("/contacts/delete", methods=['POST'])
 @jwt_required()
-def load_contacts():
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        current_user = get_jwt_identity()
-        user = db_sess.query(User).filter(User.id == current_user).first()
-        data = request.json.get('data')
-        username = data.get('username')
-        if not user:
-            return jsonify({'success': False, 'error': "User not found"}), 404
-        users = db_sess.query(User).filter(username in User.username).all()
-        data = {}
-        for i, user in enumerate(users):
-            data[i] = {
-                "id": users.id,
-                "username": users.username,
-                "surname": users.surname,
-                "name": users.name,
-                "patronymic": users.patronymic,
-                "about": users.about,
-            }
-        return jsonify({'success': True, 'data': data})
-"""
+def delete_contact():
+    current_user_id = get_jwt_identity()
+    data = request.json.get('data')
+    other_user_id = data.get('id')
 
-"""
+    db_sess = db_session.create_session()
+
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
+        return jsonify({'error': "User not found"}), 404
+
+    contact = db_sess.query(Friends).filter(
+        or_(
+            and_(Friends.sender_id == current_user_id, Friends.receiver_id == other_user_id),
+            and_(Friends.sender_id == other_user_id, Friends.receiver_id == current_user_id)
+        ),
+        Friends.confirmed == 1
+    ).first()
+
+    if contact:
+        db_sess.delete(contact)
+        db_sess.commit()
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': "Friend relationship not found"}), 404
+
+
+@app.route("/contacts/find", methods=['GET'])
+@jwt_required()
+def load_users():
+    current_user_id = get_jwt_identity()
+    db_sess = db_session.create_session()
+
+    users = db_sess.query(User).filter(User.id != current_user_id).all()
+
+    data = []
+    for user in users:
+        contact = db_sess.query(Friends).filter(
+            or_(
+                and_(Friends.sender_id == current_user_id, Friends.receiver_id == user.id),
+                and_(Friends.sender_id == user.id, Friends.receiver_id == current_user_id)
+            )
+        ).first()
+        if not contact:
+            data.append({
+                "id": user.id,
+                "username": user.username,
+                "surname": user.surname,
+                "name": user.name,
+                "patronymic": user.patronymic,
+                "email": user.email,
+                "about": user.about,
+            })
+
+    return jsonify({'success': True, 'data': data})
+
 
 @app.route("/contacts/requests", methods=['GET'])
 @jwt_required()
-def load_contacts():
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        current_user = get_jwt_identity()
-        user = db_sess.query(User).filter(User.id == current_user).first()
-        if not user:
-            return jsonify({'error': "User not found"}), 404
-        contacts = db_sess.query(Friends).filter(Friends.receiver_id == user.id,
-                                                 not Friends.confirmed).all()
-        data = {}
-        for i, contact in enumerate(contacts):
-            data[i] = {
-                "id": contacts.id,
-                "sender_id": contacts.sender_id,
-                "receiver_id": contacts.receiver_id,
-                "confirmed": contacts.confirmed,
-            }
-        return jsonify({'success': True, 'data': data})
+def load_requests():
+    current_user_id = get_jwt_identity()
+    db_sess = db_session.create_session()
+
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
+        return jsonify({'error': "User not found"}), 404
+
+    contacts = db_sess.query(Friends).filter(
+        Friends.receiver_id == current_user_id,
+        Friends.confirmed == 0
+    ).all()
+
+    data = [get_contact_details(db_sess, contact, current_user_id) for contact in contacts]
+    return jsonify({'success': True, 'user': [d for d in data if d]})
 
 
-"""
+@app.route("/contacts/requests/confirm", methods=['POST'])
+@jwt_required()
+def confirm_request():
+    current_user_id = get_jwt_identity()
+    data = request.json.get('data')
+    other_user_id = data.get('id')
+    status = bool(data.get('status'))
+
+    db_sess = db_session.create_session()
+
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
+        return jsonify({'error': "User not found"}), 404
+
+    contact = db_sess.query(Friends).filter(
+        Friends.sender_id == other_user_id,
+        Friends.receiver_id == current_user_id
+    ).first()
+
+    if contact:
+        if status:
+            contact.confirmed = status
+        else:
+            db_sess.delete(contact)
+        db_sess.commit()
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': "Friend request not found"}), 404
 
 
 @app.route("/contacts/add", methods=['POST'])
 @jwt_required()
 def add_contact():
-    db_sess = db_session.create_session()
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
     data = request.json.get('data')
-    username = data.get('login')
-    user = db_sess.query(User).filter(User.id == current_user).first()
-    if not user:
+    other_user_id = data.get('id')
+
+    db_sess = db_session.create_session()
+
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
         return jsonify({'error': "User not found"}), 404
-    contact = db_sess.query(User).filter(User.username == username).first()
+
+    existing_request = db_sess.query(Friends).filter(
+        Friends.sender_id == current_user_id,
+        Friends.receiver_id == other_user_id
+    ).first()
+    if existing_request:
+        return jsonify({'error': "Friend request already sent"}), 400
+
     contact_new = Friends(
-        sender_id=current_user,
-        receiver_id=contact.id,
+        sender_id=current_user_id,
+        receiver_id=other_user_id,
         confirmed=False,
     )
     db_sess.add(contact_new)
     db_sess.commit()
+
     return jsonify({'success': True})
 
 
