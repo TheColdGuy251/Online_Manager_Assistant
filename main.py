@@ -57,21 +57,20 @@ def refresh_expiring_jwts(response):
 def load_task():
     if request.method == "GET":
         db_sess = db_session.create_session()
-        current_user = get_jwt_identity()
-        user = db_sess.query(User).filter(User.id == current_user).first()
+        current_user_id = get_jwt_identity()
+        user = db_sess.query(User).filter(User.id == current_user_id).first()
         if not user:
             return jsonify({'success': False, 'error': "User not found"}), 404
-        tasks = db_sess.query(Task).filter(Task.host_id == user.id).all()
-        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.user_id == user.id).all()
-        for particip in task_particip:
-            tasks = db_sess.query(Task).filter(or_(Task.host_id == user.id, Task.task_name == particip.task_id)).all()
+
+        # Retrieve tasks where the current user is either the host or a participant
+        tasks = db_sess.query(Task).filter((Task.host_id == current_user_id) | (Task.participants.any(user_id=current_user_id))).all()
+
         data = []
+
         for task in tasks:
             formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
-            task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
-            task_particips = []
-            for participant in task_particip:
-                task_particips.append(participant.user_id)
+            task_particip_ids = [particip.user_id for particip in task.participants]
+            is_participant = current_user_id in task_particip_ids
             data.append({
                 "id": task.id,
                 "task_name": task.task_name,
@@ -86,8 +85,10 @@ def load_task():
                 "host_id": task.host_id,
                 "description": task.description,
                 "created_date": task.created_date,
-                "task_particip": task_particips
+                "is_participant": is_participant,
+                "task_particip": task_particip_ids
             })
+
         return jsonify({'success': True, 'data': data})
 
 

@@ -1,9 +1,11 @@
 import datetime
 import sqlalchemy
+from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 from flask_login import UserMixin
+
 
 class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'tasks'
@@ -21,6 +23,7 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     description = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
     is_private = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    participants = relationship("TaskParticip", back_populates="task")
 
     def __repr__(self):
         return f'<Task> {self.id} {self.task_name} {self.host_id} {self.begin_date} {self.end_date} {self.is_private} {self.description} {self.created_date} {self.date_remind} {self.remind} {self.condition} {self.priority}'
