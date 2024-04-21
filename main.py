@@ -275,7 +275,6 @@ def delete_contact():
 
 @app.route("/contacts/find", methods=['GET'])
 @jwt_required()
-@cross_origin()
 def load_users():
     current_user_id = get_jwt_identity()
     db_sess = db_session.create_session()
@@ -358,29 +357,26 @@ def confirm_request():
 def add_contact():
     current_user_id = get_jwt_identity()
     data = request.json.get('data')
-    other_user_id = data.get('id')
-
+    other_user_ids = data.get('ids')
     db_sess = db_session.create_session()
-
     current_user = get_current_user(db_sess, current_user_id)
     if not current_user:
         return jsonify({'error': "User not found"}), 404
+    for other_user_id in other_user_ids:
+        existing_request = db_sess.query(Friends).filter(
+            Friends.sender_id == current_user_id,
+            Friends.receiver_id == other_user_id
+        ).first()
+        if existing_request:
+            return jsonify({'error': "Friend request already sent"}), 400
 
-    existing_request = db_sess.query(Friends).filter(
-        Friends.sender_id == current_user_id,
-        Friends.receiver_id == other_user_id
-    ).first()
-    if existing_request:
-        return jsonify({'error': "Friend request already sent"}), 400
-
-    contact_new = Friends(
-        sender_id=current_user_id,
-        receiver_id=other_user_id,
-        confirmed=False,
-    )
-    db_sess.add(contact_new)
-    db_sess.commit()
-
+        contact_new = Friends(
+            sender_id=current_user_id,
+            receiver_id=other_user_id,
+            confirmed=False,
+        )
+        db_sess.add(contact_new)
+        db_sess.commit()
     return jsonify({'success': True})
 
 
