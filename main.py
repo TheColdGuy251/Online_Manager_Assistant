@@ -19,11 +19,8 @@ CORS(app)
 jwt = JWTManager(app)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=14)
 
-engine = create_engine('sqlite:///your_database.db', pool_size=20)
-Session = sessionmaker(bind=engine)
-db_sess = Session()
-db_sess.close()
-
+app.config['SQLALCHEMY_POOL_SIZE'] = 20
+app.config['SQLALCHEMY_POOL_RECYCLE'] = 3600
 
 def main():
     db_session.global_init("db/users.db")
