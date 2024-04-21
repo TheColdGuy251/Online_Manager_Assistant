@@ -8,6 +8,8 @@ from data.friends import Friends
 from data.calendar import Calendar
 from data.task_participants import TaskParticip
 from sqlalchemy import text, or_, and_
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
 
@@ -16,6 +18,11 @@ app.config['SECRET_KEY'] = 'tyuiu_secret_key'
 CORS(app)
 jwt = JWTManager(app)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=14)
+
+engine = create_engine('sqlite:///your_database.db', pool_size=20)
+Session = sessionmaker(bind=engine)
+db_sess = Session()
+db_sess.close()
 
 
 def main():
