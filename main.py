@@ -6,6 +6,7 @@ from data.users import User
 from data.tasks import Task
 from data.friends import Friends
 from data.calendar import Calendar
+from data.task_participants import TaskParticip
 from sqlalchemy import text, or_, and_
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
@@ -64,6 +65,7 @@ def load_task():
         data = []
         for task in tasks:
             formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
+            task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
             data.append({
                 "id": task.id,
                 "task_name": task.task_name,
@@ -77,7 +79,8 @@ def load_task():
                 "priority": task.priority,
                 "host_id": task.host_id,
                 "description": task.description,
-                "created_date": task.created_date
+                "created_date": task.created_date,
+                "task_particip": task_particip
             })
         return jsonify({'success': True, 'data': data})
 
@@ -106,6 +109,14 @@ def add_task():
     )
     db_sess.add(task)
     db_sess.commit()
+    task_participants = data.get('task_particip')
+    for participant in task_participants:
+        task_partic = TaskParticip(
+            task_id=task.id,
+            user_id=participant
+        )
+        db_sess.add(task_partic)
+        db_sess.commit()
     return jsonify({'success': True})
 
 
@@ -131,6 +142,17 @@ def edit_task():
         task.is_private = bool(data.get('is_private'))
         task.priority = data.get('priority')
         task.description = data.get('description')
+        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
+        db_sess.delete(task_particip)
+        task_participants = data.get('task_particip')
+        for participant in task_participants:
+            task_partic = TaskParticip(
+                task_id=task.id,
+                user_id=participant
+            )
+            db_sess.add(task_partic)
+            db_sess.commit()
+
         db_sess.commit()
     return jsonify({'success': True})
 
@@ -147,6 +169,8 @@ def delete_task():
     task_id = data.get('id')
     task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
+        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).all()
+        db_sess.delete(task_particip)
         db_sess.delete(task)
         db_sess.commit()
     else:
@@ -319,7 +343,7 @@ def load_requests():
     ).all()
 
     data = [get_contact_details(db_sess, contact, current_user_id) for contact in contacts]
-    return jsonify({'success': True, 'user': [d for d in data if d]})
+    return jsonify({'success': True, 'users': [d for d in data if d]})
 
 
 @app.route("/contacts/requests/confirm", methods=['POST'])
