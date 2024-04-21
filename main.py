@@ -22,6 +22,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=14)
 app.config['SQLALCHEMY_POOL_SIZE'] = 20
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 3600
 
+
 def main():
     db_session.global_init("db/users.db")
     app.run()
