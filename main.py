@@ -62,6 +62,9 @@ def load_task():
         if not user:
             return jsonify({'success': False, 'error': "User not found"}), 404
         tasks = db_sess.query(Task).filter(Task.host_id == user.id).all()
+        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.user_id == user.id).all()
+        for particip in task_particip:
+            tasks = db_sess.query(Task).filter(or_(Task.host_id == user.id, Task.task_name == particip.task_id)).all()
         data = []
         for task in tasks:
             formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
