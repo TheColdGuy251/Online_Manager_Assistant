@@ -99,12 +99,12 @@ def add_task():
     data = request.json.get('data')
     task = Task(
         task_name=data.get('task_name'),
-        begin_date=datetime.strptime(data.get('begin_date'), '%d-%m-%Y').date(),
-        end_date=datetime.strptime(data.get('end_date'), '%d-%m-%Y').date(),
+        begin_date=datetime.strptime(data.get('begin_date'), '%Y-%m-%d').date(),
+        end_date=datetime.strptime(data.get('end_date'), '%Y-%m-%d').date(),
         condition=data.get('condition'),
         complete_perc=data.get('complete_perc'),
         remind=bool(data.get('remind')),
-        date_remind=datetime.strptime(data.get('date_remind'), '%d-%m-%Y').date(),
+        date_remind=datetime.strptime(data.get('date_remind'), '%Y-%m-%d').date(),
         is_private=bool(data.get('is_private')),
         priority=data.get('priority'),
         description=data.get('description'),
@@ -136,12 +136,12 @@ def edit_task():
     task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
     if task:
         task.task_name = data.get('task_name')
-        task.begin_date = datetime.strptime(data.get('begin_date'), '%d-%m-%Y').date()
-        task.end_date = datetime.strptime(data.get('end_date'), '%d-%m-%Y').date()
+        task.begin_date = datetime.strptime(data.get('begin_date'), '%Y-%m-%d').date()
+        task.end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
         task.condition = data.get('condition')
         task.complete_perc = data.get('complete_perc')
         task.remind = bool(data.get('remind'))
-        task.date_remind = datetime.strptime(data.get('date_remind'), '%d-%m-%Y').date()
+        task.date_remind = datetime.strptime(data.get('date_remind'), '%Y-%m-%d').date()
         task.is_private = bool(data.get('is_private'))
         task.priority = data.get('priority')
         task.description = data.get('description')

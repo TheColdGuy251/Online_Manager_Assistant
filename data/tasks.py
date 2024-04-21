@@ -26,7 +26,7 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
         return f'<Task> {self.id} {self.task_name} {self.host_id} {self.begin_date} {self.end_date} {self.is_private} {self.description} {self.created_date} {self.date_remind} {self.remind} {self.condition} {self.priority}'
 
     def formatted_dates(self):
-        formatted_begin_date = self.begin_date.strftime('%d-%m-%Y') if self.begin_date else None
-        formatted_end_date = self.end_date.strftime('%d-%m-%Y') if self.end_date else None
-        formatted_date_remind = self.date_remind.strftime('%d-%m-%Y') if self.date_remind else None
+        formatted_begin_date = self.begin_date.strftime('%Y-%m-%d') if self.begin_date else None
+        formatted_end_date = self.end_date.strftime('%Y-%m-%d') if self.end_date else None
+        formatted_date_remind = self.date_remind.strftime('%Y-%m-%d') if self.date_remind else None
         return formatted_begin_date, formatted_end_date, formatted_date_remind
