@@ -1,19 +1,15 @@
-from flask import Flask, render_template, redirect, request, make_response, session, abort, jsonify, url_for, \
-    send_from_directory
+from flask import Flask, request, make_response, jsonify
 from data import db_session
 from datetime import datetime, timedelta, timezone
 from data.users import User
 from data.tasks import Task
-from data.friends import Friends
 from data.calendar import Calendar
-from data.task_participants import TaskParticip
-from sqlalchemy import text, or_, and_
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from contacts import contact_blueprint
 from tasks import tasks_blueprint
-from flask_cors import CORS, cross_origin
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, jwt_manager, get_jwt, set_access_cookies, unset_jwt_cookies
+from auth import auth_blueprint
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt,\
+    set_access_cookies
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tyuiu_secret_key'
@@ -25,7 +21,7 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 20
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 3600
 app.register_blueprint(contact_blueprint)
 app.register_blueprint(tasks_blueprint)
-
+app.register_blueprint(auth_blueprint)
 
 def main():
     db_session.global_init("db/users.db")
@@ -154,141 +150,6 @@ def add_calendar():
     )
     db_sess.add(calendar)
     db_sess.commit()
-    return jsonify({'success': True})
-
-
-# регистрация аккаунта
-@app.route('/register', methods=['GET', 'POST'])
-def reqister():
-    if request.method == "POST":
-        db_sess = db_session.create_session()
-        data = request.json.get('data')
-        username = data.get('username')
-        surname = data.get('surname')
-        name = data.get('name')
-        patronymic = data.get('patronymic')
-        about = data.get('about')
-        email = data.get('email')
-        password = data.get('password')
-        if db_sess.query(User).filter(User.username == username).first():
-            return {'success': False, 'Error': 'user_exists'}
-        if db_sess.query(User).filter(User.email == email).first():
-            return {'success': False, 'Error': 'email_exists'}
-        user = User(
-            username=username,
-            surname=surname,
-            name=name,
-            patronymic=patronymic,
-            email=email,
-            about=about
-        )
-        user.set_password(password)
-        db_sess.add(user)
-        db_sess.commit()
-        access_token = create_access_token(identity=user.id)
-        return jsonify({'success': True, 'access_token': access_token})
-
-
-# вход в аккаунт
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    data = request.json.get('data')
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
-    db_sess = db_session.create_session()
-    user1 = db_sess.query(User).filter(User.email == email).first()
-    user2 = db_sess.query(User).filter(User.username == username).first()
-    if user1 and user1.check_password(password):
-        access_token = create_access_token(identity=user1.id)
-        return jsonify({'success': True, "access_token": access_token, "login": user1.username}), 200
-    elif user2 and user2.check_password(password):
-        access_token = create_access_token(identity=user2.id)
-        return jsonify({'success': True, "access_token": access_token, "login": user2.username}), 200
-    return jsonify({'success': False, "Error": "WrongAuth"})
-
-
-@app.route("/logout", methods=["POST"])
-def logout():
-    unset_jwt_cookies(jsonify({"Success": True}))
-    return jsonify({"Success": True})
-
-
-# переход в профиль
-@app.route("/profile", methods=['GET'])
-def profile():
-    current_user_id = get_jwt_identity()
-    db_sess = db_session.create_session()
-    current_user = get_current_user(db_sess, current_user_id)
-    if not current_user:
-        return jsonify({'error': "User not found"}), 404
-    data = {
-        "id": current_user.id,
-        "username": current_user.username,
-        "surname": current_user.surname,
-        "name": current_user.name,
-        "patronymic": current_user.patronymic,
-        "about": current_user.about,
-        "email": current_user.email,
-        "position": current_user.position,
-        "created_date": current_user.created_date,
-    }
-    return jsonify({'success': True, 'data': data})
-
-
-# изменение профиля
-@app.route("/profile/edit", methods=['GET', 'POST'])
-@jwt_required()
-def profile_edit(username):
-    if request.method == "GET":
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.username == username).first()
-        if user:
-            user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
-                         'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
-                         'created_date': user.created_date}
-            return jsonify({'success': True, 'data': user_dict})
-        else:
-            jsonify({'data': 'User not found'})
-    if request.method == "POST":
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.username == username).first()
-        if user:
-            data = request.json.get('data')
-            user.username = data.get('username')
-            user.surname = data.get('surname')
-            user.name = data.form.get('name')
-            user.patronymic = data.get('patronymic')
-            user.about = data.get('about')
-            user.email = data.get('email')
-            password = data.get('password')
-            if db_sess.query(User).filter(User.username == user.username).first():
-                return {'success': False, 'error': 'user_exists'}
-            if db_sess.query(User).filter(User.email == user.email).first():
-                return {'success': False, 'error': 'email_exists'}
-            user.set_password(password)
-
-            db_sess.commit()
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'User not found'})
-    return jsonify({'success': True})
-
-
-# удаление профиля
-@app.route("/profile/delete", methods=['GET', 'POST'])
-@jwt_required()
-def profile_delete():
-    current_user_id = get_jwt_identity()
-    db_sess = db_session.create_session()
-    current_user = get_current_user(db_sess, current_user_id)
-    if not current_user:
-        return jsonify({'error': "User not found"}), 404
-    if current_user:
-        db_sess.delete(current_user)
-        db_sess.commit()
-    else:
-        return jsonify({'success': False, 'Error': 'User not found'})
     return jsonify({'success': True})
 
 

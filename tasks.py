@@ -114,7 +114,7 @@ def edit_task():
     host_id = data.get("host_id")
     host_user = db_sess.query(User).filter(User.id == host_id).first()
     task = db_sess.query(Task).filter(Task.id == task_id, or_(Task.host_id == current_user,
-                                                              host_user.position < user.position)).first()
+                                                              host_user.position >= user.position)).first()
     if task:
         task.task_name = data.get('task_name')
         task.begin_date = datetime.strptime(data.get('begin_date'), '%Y-%m-%d').date()
@@ -154,7 +154,7 @@ def delete_task():
     host_id = data.get("host_id")
     host_user = db_sess.query(User).filter(User.id == host_id).first()
     task = db_sess.query(Task).filter(Task.id == task_id, or_(Task.host_id == current_user,
-                                                              host_user.position < user.position)).first()
+                                                              host_user.position >= user.position)).first()
     if task:
         db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         db_sess.delete(task)
