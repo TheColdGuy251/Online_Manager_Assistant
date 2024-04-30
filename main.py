@@ -197,6 +197,7 @@ def edit_task():
         db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         task_participants = data.get('task_particip')
         for participant in task_participants:
+            participant = participant.get("value")
             task_partic = TaskParticip(
                 task_id=task.id,
                 user_id=participant
