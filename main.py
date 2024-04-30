@@ -74,8 +74,15 @@ def load_task():
 
         for task in tasks:
             formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
-            task_particip_ids = [particip.user_id for particip in task.participants]
-            is_participant = current_user_id in task_particip_ids
+            task_particip = []
+            for particip in task.participants:
+                fio = db_sess.query(User).filter(User.id == particip.user_id).first()
+                task_particip.append({
+                    "id": particip.user_id,
+                    "label": fio.surname + " " + fio.name + " " + fio.patronymic
+                })
+
+            is_participant = current_user_id in task_particip
             data.append({
                 "id": task.id,
                 "task_name": task.task_name,
@@ -91,7 +98,7 @@ def load_task():
                 "description": task.description,
                 "created_date": task.created_date,
                 "is_participant": is_participant,
-                "task_particip": task_particip_ids
+                "task_particip": task_particip
             })
 
         return jsonify({'success': True, 'data': data})
