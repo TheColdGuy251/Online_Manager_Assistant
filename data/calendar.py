@@ -12,9 +12,9 @@ class Calendar(SqlAlchemyBase, UserMixin, SerializerMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     host_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.host_id"))
     task_name = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.id"))
-    begin_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
-    end_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+    begin_time = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+    end_time = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     is_private = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.is_private"))
 
     def __repr__(self):
-        return f'<Calendar> {self.id} {self.task_name} {self.host_id} {self.begin_date} {self.end_date} {self.is_private}'
+        return f'<Calendar> {self.id} {self.task_name} {self.host_id} {self.begin_time} {self.end_time} {self.is_private}'

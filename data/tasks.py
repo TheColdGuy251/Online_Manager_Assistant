@@ -24,6 +24,7 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     is_private = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     participants = relationship("TaskParticip", back_populates="task")
+    is_in_calendar = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     def __repr__(self):
         return f'<Task> {self.id} {self.task_name} {self.host_id} {self.begin_date} {self.end_date} {self.is_private} {self.description} {self.created_date} {self.date_remind} {self.remind} {self.condition} {self.priority}'
