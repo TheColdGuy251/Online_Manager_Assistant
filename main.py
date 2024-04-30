@@ -149,7 +149,10 @@ def edit_task():
         return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
     task_id = data.get('id')
-    task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
+    host_id = data.get("host_id")
+    host_user = db_sess.query(User).filter(User.id == host_id).first()
+    task = db_sess.query(Task).filter(Task.id == task_id, or_(Task.host_id == current_user,
+                                                              host_user.position < user.position)).first()
     if task:
         task.task_name = data.get('task_name')
         task.begin_date = datetime.strptime(data.get('begin_date'), '%Y-%m-%d').date()
@@ -185,9 +188,12 @@ def delete_task():
         return jsonify({'error': "User not found"}), 404
     data = request.json.get('data')
     task_id = data.get('id')
-    task = db_sess.query(Task).filter(Task.id == task_id, Task.host_id == current_user).first()
+    host_id = data.get("host_id")
+    host_user = db_sess.query(User).filter(User.id == host_id).first()
+    task = db_sess.query(Task).filter(Task.id == task_id, or_(Task.host_id == current_user,
+                                                              host_user.position < user.position)).first()
     if task:
-        task_particip = db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
+        db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         db_sess.delete(task)
         db_sess.commit()
     else:
@@ -479,21 +485,29 @@ def logout():
 
 
 # переход в профиль
-@app.route("/profile/<string:username>", methods=['GET'])
-def profile(username):
+@app.route("/profile", methods=['GET'])
+def profile():
+    current_user_id = get_jwt_identity()
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter_by(username=username).first()
-
-    if user:
-        user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
-                     'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
-                     'created_date': user.created_date}
-        return jsonify({'success': True, 'data': user_dict})
-    return jsonify({'success': False, 'data': 'User not found'})
+    current_user = get_current_user(db_sess, current_user_id)
+    if not current_user:
+        return jsonify({'error': "User not found"}), 404
+    data = {
+        "id": current_user.id,
+        "username": current_user.username,
+        "surname": current_user.surname,
+        "name": current_user.name,
+        "patronymic": current_user.patronymic,
+        "about": current_user.about,
+        "email": current_user.email,
+        "position": current_user.position,
+        "created_date": current_user.created_date,
+    }
+    return jsonify({'success': True, 'data': data})
 
 
 # изменение профиля
-@app.route("/profile/<string:username>/edit", methods=['GET', 'POST'])
+@app.route("/profile/edit", methods=['GET', 'POST'])
 @jwt_required()
 def profile_edit(username):
     if request.method == "GET":
@@ -532,7 +546,7 @@ def profile_edit(username):
 
 
 # удаление профиля
-@app.route("/profile/<string:username>/delete", methods=['GET', 'POST'])
+@app.route("/profile/delete", methods=['GET', 'POST'])
 @jwt_required()
 def profile_delete(username):
     db_sess = db_session.create_session()
