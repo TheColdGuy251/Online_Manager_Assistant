@@ -11,10 +11,13 @@ class Calendar(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     host_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.host_id"))
-    task_name = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.id"))
-    begin_time = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
-    end_time = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
-    is_private = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.is_private"))
+    task_name = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("tasks.task_name"))
+    task_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.id"))
+    cell_date = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
     def __repr__(self):
-        return f'<Calendar> {self.id} {self.task_name} {self.host_id} {self.begin_time} {self.end_time} {self.is_private}'
+        return f'<Calendar> {self.id} {self.task_name} {self.host_id} {self.cell_date}'
+
+    def formatted_dates(self):
+        formatted_cell_date = self.cell_date.strftime('%Y-%m-%d') if self.cell_date else None
+        return formatted_cell_date

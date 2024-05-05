@@ -11,7 +11,7 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'tasks'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    task_name = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    task_name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     begin_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
     end_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
     condition = sqlalchemy.Column(sqlalchemy.Integer, default=0)
