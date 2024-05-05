@@ -53,7 +53,7 @@ def load_calendar():
                 events.append({"name": calendar_date.task_name, "id": calendar_date.task_id})
         calendar_data.append({"id": date, "events": events})
     db_sess.close()
-    return jsonify({'success': True, 'events': calendar_data})
+    return jsonify({'success': True, 'cell_data': calendar_data})
 
 
 @calendar_blueprint.route("/calendar/add", methods=['POST'])
