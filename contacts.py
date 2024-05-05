@@ -55,6 +55,7 @@ def load_contacts():
     ).all()
 
     data = [get_contact_details(db_sess, contact, current_user_id) for contact in contacts]
+    db_sess.close()
     return jsonify({'success': True, 'user': [d for d in data if d]})
 
 
@@ -82,6 +83,7 @@ def delete_contact():
     if contact:
         db_sess.delete(contact)
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': True})
     else:
         return jsonify({'error': "Friend relationship not found"}), 404
@@ -113,7 +115,7 @@ def load_users():
                 "email": user.email,
                 "about": user.about,
             })
-
+    db_sess.close()
     return jsonify({'success': True, 'data': data})
 
 
@@ -133,6 +135,7 @@ def load_requests():
     ).all()
 
     data = [get_contact_details(db_sess, contact, current_user_id) for contact in contacts]
+    db_sess.close()
     return jsonify({'success': True, 'users': [d for d in data if d]})
 
 
@@ -161,6 +164,7 @@ def confirm_request():
         else:
             db_sess.delete(contact)
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': True})
     else:
         return jsonify({'error': "Friend request not found"}), 404
@@ -191,4 +195,5 @@ def add_contact():
         )
         db_sess.add(contact_new)
         db_sess.commit()
+        db_sess.close()
     return jsonify({'success': True})

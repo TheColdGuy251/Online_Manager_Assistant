@@ -15,7 +15,6 @@ tasks_blueprint = Blueprint(
 )
 
 
-task_data = []
 
 
 @tasks_blueprint.route("/tasks", methods=['GET'])
@@ -29,7 +28,7 @@ def load_task():
 
     # Retrieve tasks where the current user is either the host or a participant
     tasks = db_sess.query(Task).filter((Task.host_id == current_user_id) | (Task.participants.any(user_id=current_user_id)) | (user.position == 0)).all()
-
+    task_data = []
     for task in tasks:
         formatted_begin_date, formatted_end_date, formatted_date_remind = task.formatted_dates()
         task_particip = []
@@ -43,6 +42,7 @@ def load_task():
         is_participant = current_user_id in task_particip
         host_user = db_sess.query(User).filter(User.id == task.host_id).first()
         host_user_fio = host_user.surname + " " + host_user.name + " " +host_user.patronymic
+
         task_data.append({
             "id": task.id,
             "task_name": task.task_name,
@@ -61,6 +61,7 @@ def load_task():
             "is_participant": is_participant,
             "task_particip": task_particip
             })
+    db_sess.close()
     return jsonify({'success': True, 'data': task_data})
 
 
@@ -97,7 +98,7 @@ def add_task():
         )
         db_sess.add(task_partic)
         db_sess.commit()
-    load_task()
+    db_sess.close()
     return jsonify({'success': True})
 
 
@@ -137,7 +138,7 @@ def edit_task():
             db_sess.add(task_partic)
             db_sess.commit()
         db_sess.commit()
-        load_task()
+    db_sess.close()
     return jsonify({'success': True})
 
 
@@ -161,5 +162,5 @@ def delete_task():
         db_sess.commit()
     else:
         abort(404)
-    load_task()
+    db_sess.close()
     return jsonify({'success': True})

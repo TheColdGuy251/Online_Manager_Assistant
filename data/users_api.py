@@ -43,6 +43,7 @@ def create_user():
     )
     db_sess.add(user)
     db_sess.commit()
+    db_sess.close()
     return jsonify({'success': 'OK'})
 
 
@@ -54,4 +55,5 @@ def delete_news(users_id):
         return jsonify({'error': 'Not found'})
     db_sess.delete(user)
     db_sess.commit()
+    db_sess.close()
     return jsonify({'success': 'OK'})

@@ -2,7 +2,6 @@ from flask import request, abort, Blueprint, jsonify
 from data import db_session
 from data.users import User
 from data.calendar import Calendar
-from tasks import task_data
 from sqlalchemy import and_, or_
 from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -53,7 +52,7 @@ def load_calendar():
             if calendar_date.cell_date == date:
                 events.append({"name": calendar_date.task_name, "id": calendar_date.task_id})
         calendar_data.append({"id": date, "events": events})
-
+    db_sess.close()
     return jsonify({'success': True, 'events': calendar_data})
 
 
@@ -76,6 +75,7 @@ def add_calendar():
             )
             db_sess.add(calendar)
     db_sess.commit()
+    db_sess.close()
     return jsonify({'success': True})
 
 
@@ -98,4 +98,5 @@ def delete_calendar():
         db_sess.commit()
     else:
         abort(404)
+    db_sess.close()
     return jsonify({'success': True})

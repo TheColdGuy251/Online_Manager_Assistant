@@ -65,6 +65,7 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         access_token = create_access_token(identity=user.id)
+        db_sess.close()
         return jsonify({'success': True, 'access_token': access_token})
 
 
@@ -84,6 +85,7 @@ def login():
     elif user2 and user2.check_password(password):
         access_token = create_access_token(identity=user2.id)
         return jsonify({'success': True, "access_token": access_token, "login": user2.username}), 200
+    db_sess.close()
     return jsonify({'success': False, "Error": "WrongAuth"})
 
 
@@ -112,6 +114,7 @@ def profile():
         "position": current_user.position,
         "created_date": current_user.created_date,
     }
+    db_sess.close()
     return jsonify({'success': True, 'data': data})
 
 
@@ -126,6 +129,7 @@ def profile_edit(username):
             user_dict = {'username': user.username, 'surname': user.surname, 'name': user.name,
                          'patronymic': user.patronymic, 'about': user.about, 'email': user.email,
                          'created_date': user.created_date}
+            db_sess.close()
             return jsonify({'success': True, 'data': user_dict})
         else:
             jsonify({'data': 'User not found'})
@@ -148,6 +152,7 @@ def profile_edit(username):
             user.set_password(password)
 
             db_sess.commit()
+            db_sess.close()
             return jsonify({'success': True})
         else:
             return jsonify({'success': False, 'error': 'User not found'})
