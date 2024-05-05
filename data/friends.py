@@ -15,4 +15,4 @@ class Friends(SqlAlchemyBase, UserMixin, SerializerMixin):
     confirmed = sqlalchemy.Column(sqlalchemy.Boolean)
 
     def __repr__(self):
-        return f'<Friends> {self.id} {self.sender_id} {self.receiver_id} {self.confirmed}'
+        return f'<Friends> {self.id} {self.sender_id} {self.receiver_id} {self.confirmed} {self.user_id}'
