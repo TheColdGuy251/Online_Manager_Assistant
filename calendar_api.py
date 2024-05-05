@@ -3,6 +3,7 @@ from data import db_session
 from data.users import User
 from data.calendar import Calendar
 from sqlalchemy import and_, or_
+from time import sleep
 from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -15,6 +16,7 @@ calendar_blueprint = Blueprint(
 @calendar_blueprint.route("/calendar", methods=['POST'])
 @jwt_required()
 def load_calendar():
+    sleep(0.1)
     db_sess = db_session.create_session()
     current_user_id = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user_id).first()
@@ -53,7 +55,6 @@ def load_calendar():
                 events.append({"name": calendar_date.task_name, "id": calendar_date.task_id})
         calendar_data.append({"id": date, "events": events})
     db_sess.close()
-    print(calendar_data)
     return jsonify({'success': True, 'cell_data': calendar_data})
 
 
