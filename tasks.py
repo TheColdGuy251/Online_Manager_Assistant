@@ -149,6 +149,7 @@ def delete_task():
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
+        db_sess.close()
         return jsonify({'error': "User not found"}), 404
     new_data = request.json.get('data')
     task_id = new_data.get('id')
@@ -160,7 +161,8 @@ def delete_task():
         db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
         db_sess.delete(task)
         db_sess.commit()
+        db_sess.close()
     else:
         abort(404)
-    db_sess.close()
+        db_sess.close()
     return jsonify({'success': True})

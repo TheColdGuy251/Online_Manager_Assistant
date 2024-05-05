@@ -15,11 +15,11 @@ calendar_blueprint = Blueprint(
 @calendar_blueprint.route("/calendar", methods=['POST'])
 @jwt_required()
 def load_calendar():
-
     db_sess = db_session.create_session()
     current_user_id = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user_id).first()
     if not user:
+        db_sess.close()
         return jsonify({'success': False, 'error': "User not found"}), 404
     data = request.json.get('data')
     month = data.get("month")
@@ -63,17 +63,21 @@ def add_calendar():
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
+        db_sess.close()
         return jsonify({'success': False, 'error': "User not found"}), 404
     new_data = request.json.get('data')
-    for event in new_data:
-        for task_name in event.get("events"):
-            calendar = Calendar(
-                task_name=task_name.get("name"),
-                task_id=task_name.get("id"),
-                cell_date=event.get('id'),
-                host_id=current_user
-            )
-            db_sess.add(calendar)
+    calendar = Calendar(
+        task_name=new_data.get("name"),
+        task_id=new_data.get("task_id"),
+        cell_date=new_data.get('id'),
+        host_id=current_user
+    )
+    existing_task = db_sess.query(Calendar).filter(Calendar.id == new_data.get("task_id"), Calendar.cell_date == new_data.get('id'),
+                                                   Calendar.host_id == current_user).first()
+    if existing_task:
+        db_sess.close()
+        return jsonify({'success': False, 'Error': "Already exists"})
+    db_sess.add(calendar)
     db_sess.commit()
     db_sess.close()
     return jsonify({'success': True})
@@ -86,12 +90,13 @@ def delete_calendar():
     current_user = get_jwt_identity()
     user = db_sess.query(User).filter(User.id == current_user).first()
     if not user:
+        db_sess.close()
         return jsonify({'error': "User not found"}), 404
     new_data = request.json.get('events')
     cell_date = new_data.get('id')
-    task_name = new_data.get('name')
+    task_id = new_data.get('task_id')
     calendar = db_sess.query(Calendar).filter(and_(Calendar.cell_date == cell_date, Calendar.host_id == current_user,
-                                              Calendar.task_name == task_name)).first()
+                                                   Calendar.task_id == task_id)).first()
 
     if calendar:
         db_sess.delete(calendar)
