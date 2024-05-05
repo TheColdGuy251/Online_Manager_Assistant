@@ -53,6 +53,7 @@ def load_calendar():
                 events.append({"name": calendar_date.task_name, "id": calendar_date.task_id})
         calendar_data.append({"id": date, "events": events})
     db_sess.close()
+    print(calendar_data)
     return jsonify({'success': True, 'cell_data': calendar_data})
 
 
@@ -72,7 +73,8 @@ def add_calendar():
         cell_date=new_data.get('id'),
         host_id=current_user
     )
-    existing_task = db_sess.query(Calendar).filter(Calendar.id == new_data.get("task_id"), Calendar.cell_date == new_data.get('id'),
+    existing_task = db_sess.query(Calendar).filter(Calendar.task_id == new_data.get("task_id"),
+                                                   Calendar.cell_date == new_data.get('id'),
                                                    Calendar.host_id == current_user).first()
     if existing_task:
         db_sess.close()
