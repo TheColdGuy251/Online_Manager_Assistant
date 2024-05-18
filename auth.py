@@ -97,6 +97,7 @@ def logout():
 
 # переход в профиль
 @auth_blueprint.route("/profile", methods=['GET'])
+@jwt_required()
 def profile():
     current_user_id = get_jwt_identity()
     db_sess = db_session.create_session()
