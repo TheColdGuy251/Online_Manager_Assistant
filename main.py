@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from data.users import User
 from contacts import contact_blueprint
 from tasks import tasks_blueprint
+from events import events_blueprint
 from auth import auth_blueprint
 from calendar_api import calendar_blueprint
 from flask_cors import CORS
@@ -22,6 +23,7 @@ app.register_blueprint(contact_blueprint)
 app.register_blueprint(tasks_blueprint)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(calendar_blueprint)
+app.register_blueprint(events_blueprint)
 
 
 def main():
