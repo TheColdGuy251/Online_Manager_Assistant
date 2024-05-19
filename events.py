@@ -101,10 +101,9 @@ def delete_event():
     event_id = new_data.get('id')
     host_id = new_data.get("host_id")
     host_user = db_sess.query(User).filter(User.id == host_id).first()
-    event = db_sess.query(Events).filter(Events.id == event_id, or_(Events.host_id == current_user,
-                                                              host_user.position >= user.position)).first()
+    event = db_sess.query(Events).filter(Events.id == event_id).first()
     if event:
-        if current_user == event.host_id:
+        if current_user == event.host_id or host_user.position >= user.position:
             db_sess.query(EventParticip).filter(EventParticip.event_id == event.id).delete()
             db_sess.delete(event)
         else:
