@@ -67,7 +67,8 @@ def load_calendar():
                         "label": fio.surname + " " + fio.name + " " + fio.patronymic
                     })
                 events_to_calendar.append({"name": event.event_name, "id": event.id, "description": event.event_descr,
-                                           "host_id": event.host_id, "is_events": True, "time": event.time, "particip": event_particip})
+                                           "host_id": event.host_id, "is_events": True, "time": event.time,
+                                           "particip": event_particip, "date": event.cell_date})
         calendar_data.append({"id": date, "events": events_to_calendar})
     db_sess.close()
     return jsonify({'success': True, 'cell_data': calendar_data})
