@@ -115,32 +115,43 @@ def edit_task():
     if not user:
         return jsonify({'success': False, 'error': "User not found"}), 404
     new_data = request.json.get('data')
-    task_id = new_data.get('id')
-    host_id = new_data.get("host_id")
+    task_id = str(new_data.get('id'))
+    host_id = str(new_data.get("host_id"))
     host_user = db_sess.query(User).filter(User.id == host_id).first()
-    task = db_sess.query(Task).filter(Task.id == task_id, or_(Task.host_id == current_user,
-                                                              host_user.position >= user.position)).first()
-    if task:
-        task.task_name = new_data.get('task_name')
-        task.begin_date = datetime.strptime(new_data.get('begin_date'), '%Y-%m-%d').date()
-        task.end_date = datetime.strptime(new_data.get('end_date'), '%Y-%m-%d').date()
-        task.condition = new_data.get('condition')
-        task.complete_perc = new_data.get('complete_perc')
-        task.remind = bool(new_data.get('remind'))
-        task.date_remind = datetime.strptime(new_data.get('date_remind'), '%Y-%m-%d').date()
-        task.is_private = bool(new_data.get('is_private'))
-        task.priority = new_data.get('priority')
-        task.description = new_data.get('description')
-        db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
-        task_participants = new_data.get('task_particip')
-        for participant in task_participants:
-            participant = participant.get("value")
-            task_partic = TaskParticip(
-                task_id=task.id,
-                user_id=participant
-            )
-            db_sess.add(task_partic)
+    task = db_sess.query(Task).filter(Task.id == task_id).first()
+
+    if host_id == current_user or host_user.position >= user.position:
+        if task:
+            task.task_name = new_data.get('task_name')
+            task.begin_date = datetime.strptime(new_data.get('begin_date'), '%Y-%m-%d').date() if new_data.get(
+                'begin_date') \
+                else datetime.strptime(datetime.now().strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+            task.end_date = datetime.strptime(new_data.get('end_date'), '%Y-%m-%d').date() if new_data.get('end_date') \
+                else datetime.strptime((datetime.now() + timedelta(days=14)).strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+            task.condition = str(new_data.get('condition'))
+            task.complete_perc = str(new_data.get('complete_perc'))
+            task.remind = bool(new_data.get('remind'))
+            task.date_remind = datetime.strptime(new_data.get('date_remind'), '%Y-%m-%d').date() if new_data.get(
+                'date_remind') \
+                else datetime.strptime((datetime.now() + timedelta(days=12)).strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+            task.is_private = bool(new_data.get('is_private'))
+            task.priority = str(new_data.get('priority'))
+            task.description = new_data.get('description')
+            db_sess.query(TaskParticip).filter(TaskParticip.task_id == task.id).delete()
+            task_participants = new_data.get('task_particip')
+            for participant in task_participants:
+                participant = participant.get("value")
+                task_partic = TaskParticip(
+                    task_id=task.id,
+                    user_id=participant
+                )
+                db_sess.add(task_partic)
+                db_sess.commit()
             db_sess.commit()
+    else:
+        task.condition = str(new_data.get('condition'))
+        task.complete_perc = str(new_data.get('complete_perc'))
+        task.description = new_data.get('description')
         db_sess.commit()
     db_sess.close()
     return jsonify({'success': True})
