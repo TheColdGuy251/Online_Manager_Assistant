@@ -64,11 +64,14 @@ def add_event():
     if not user:
         return jsonify({'success': False, 'error': "User not found"}), 404
     new_data = request.json.get('data')
+    cell_date = datetime.strptime(new_data.get('date'), '%Y-%m-%d').date() if new_data.get('date')\
+        else datetime.strptime(datetime.now().strftime('%Y-%m-%d'), '%Y-%m-%d').date()
     event = Events(
         event_name=new_data.get('event_name'),
-        cell_date=datetime.strptime(new_data.get('date'), '%Y-%m-%d').date(),
+        cell_date=cell_date,
         event_descr=new_data.get('description'),
-        host_id=current_user
+        host_id=current_user,
+        time=new_data.get("time")
     )
     db_sess.add(event)
     db_sess.commit()

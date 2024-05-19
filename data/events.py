@@ -15,6 +15,7 @@ class Events(SqlAlchemyBase, UserMixin, SerializerMixin):
     event_name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     event_descr = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
     cell_date = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    time = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     participants = relationship("EventParticip", back_populates="event")
 
     def __repr__(self):

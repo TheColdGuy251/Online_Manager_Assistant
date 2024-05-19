@@ -14,7 +14,7 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     task_name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     begin_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     end_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
-    condition = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+    condition = sqlalchemy.Column(sqlalchemy.Integer, default=1)
     priority = sqlalchemy.Column(sqlalchemy.Integer, default=1)
     complete_perc = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     remind = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
