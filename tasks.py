@@ -15,8 +15,6 @@ tasks_blueprint = Blueprint(
 )
 
 
-
-
 @tasks_blueprint.route("/tasks", methods=['GET'])
 @jwt_required()
 def load_task():
@@ -74,14 +72,20 @@ def add_task():
     if not user:
         return jsonify({'success': False, 'error': "User not found"}), 404
     new_data = request.json.get('data')
+    begin_date = datetime.strptime(new_data.get('begin_date'), '%Y-%m-%d').date() if new_data.get('begin_date')\
+        else datetime.strptime(datetime.now().strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+    end_date = datetime.strptime(new_data.get('end_date'), '%Y-%m-%d').date() if new_data.get('end_date') \
+        else datetime.strptime((datetime.now() + timedelta(days=14)).strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+    date_remind = datetime.strptime(new_data.get('date_remind'), '%Y-%m-%d').date() if new_data.get('date_remind') \
+        else datetime.strptime((datetime.now() + timedelta(days=12)).strftime('%Y-%m-%d'), '%Y-%m-%d').date()
     task = Task(
         task_name=new_data.get('task_name'),
-        begin_date=datetime.strptime(new_data.get('begin_date'), '%Y-%m-%d').date(),
-        end_date=datetime.strptime(new_data.get('end_date'), '%Y-%m-%d').date(),
+        begin_date=begin_date,
+        end_date=end_date,
         condition=new_data.get('condition'),
         complete_perc=new_data.get('complete_perc'),
         remind=bool(new_data.get('remind')),
-        date_remind=datetime.strptime(new_data.get('date_remind'), '%Y-%m-%d').date(),
+        date_remind=date_remind,
         is_private=bool(new_data.get('is_private')),
         priority=new_data.get('priority'),
         description=new_data.get('description'),

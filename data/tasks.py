@@ -12,8 +12,8 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     task_name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    begin_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
-    end_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
+    begin_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    end_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     condition = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     priority = sqlalchemy.Column(sqlalchemy.Integer, default=1)
     complete_perc = sqlalchemy.Column(sqlalchemy.Integer, default=0)
@@ -25,6 +25,8 @@ class Task(SqlAlchemyBase, UserMixin, SerializerMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     participants = relationship("TaskParticip", back_populates="task")
     is_in_calendar = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+
+    calendaric = relationship("Calendar", back_populates="calendar_task", foreign_keys="[Calendar.task_id]")
 
     def __repr__(self):
         return f'<Task> {self.id} {self.task_name} {self.host_id} {self.begin_date} {self.end_date} {self.is_private} {self.description} {self.created_date} {self.date_remind} {self.remind} {self.condition} {self.priority}'

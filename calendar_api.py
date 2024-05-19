@@ -51,16 +51,15 @@ def load_calendar():
                                                   Calendar.cell_date.like(f'%{last_date[0] + "-" + last_date[1]}%'),
                                                   Calendar.cell_date.like(f'%{year + "-" + month}%')),
                                               Calendar.host_id == current_user_id).all()
-    print(calendar)
     calendar_data = []
     for date in cells:
         events_to_calendar = []
         for calendar_date in calendar:
             if calendar_date.cell_date == date:
-                events_to_calendar.append({"name": calendar_date.task_name, "id": calendar_date.task_id})
+                events_to_calendar.append({"name": calendar_date.calendar_task.task_name, "id": calendar_date.calendar_task.id})
         for event in events:
             if event.cell_date == date:
-                events_to_calendar.append({"name": event.event_name, "id": event.id, "description": event.event_descr, "is_events": True})
+                events_to_calendar.append({"name": event.event_name, "id": event.id, "description": event.event_descr, "host_id": event.host_id, "is_events": True})
         calendar_data.append({"id": date, "events": events_to_calendar})
     db_sess.close()
     return jsonify({'success': True, 'cell_data': calendar_data})

@@ -16,6 +16,8 @@ class Calendar(SqlAlchemyBase, UserMixin, SerializerMixin):
     task_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("tasks.id"))
     cell_date = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
+    calendar_task = relationship("Task", back_populates="calendaric", foreign_keys=[task_id])
+
     def __repr__(self):
         return f'<Calendar> {self.id} {self.task_name} {self.host_id} {self.cell_date}'
 
