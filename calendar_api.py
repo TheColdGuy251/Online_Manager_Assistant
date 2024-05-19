@@ -59,7 +59,15 @@ def load_calendar():
                 events_to_calendar.append({"name": calendar_date.calendar_task.task_name, "id": calendar_date.calendar_task.id})
         for event in events:
             if event.cell_date == date:
-                events_to_calendar.append({"name": event.event_name, "id": event.id, "description": event.event_descr, "host_id": event.host_id, "is_events": True, "time": event.time})
+                event_particip = []
+                for particip in event.participants:
+                    fio = db_sess.query(User).filter(User.id == particip.user_id).first()
+                    event_particip.append({
+                        "id": particip.user_id,
+                        "label": fio.surname + " " + fio.name + " " + fio.patronymic
+                    })
+                events_to_calendar.append({"name": event.event_name, "id": event.id, "description": event.event_descr,
+                                           "host_id": event.host_id, "is_events": True, "time": event.time, "particip": event_particip})
         calendar_data.append({"id": date, "events": events_to_calendar})
     db_sess.close()
     return jsonify({'success': True, 'cell_data': calendar_data})
